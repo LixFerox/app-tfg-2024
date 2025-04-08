@@ -120,15 +120,22 @@ private fun WelcomeSection() {
             Text(
                 text = "¡Bienvenido,",
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Jorge Rosado Julián!",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF2196F3)
-            )
+            Row {
+                Text(
+                    text = "Jorge Rosado Julián",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF2196F3)
+                )
+                Text(
+                    text = "!",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {

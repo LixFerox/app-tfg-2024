@@ -6,4 +6,5 @@ import kotlinx.serialization.Serializable
 object Tables {
     const val users = "users"
     const val requests = "requests"
+    const val stats = "stats"
 }

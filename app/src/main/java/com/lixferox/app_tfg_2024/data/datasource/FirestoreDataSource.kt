@@ -5,8 +5,9 @@ import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.data.model.Tables
-import com.lixferox.app_tfg_2024.domain.model.Request
-import com.lixferox.app_tfg_2024.domain.model.User
+import com.lixferox.app_tfg_2024.model.Request
+import com.lixferox.app_tfg_2024.model.Stats
+import com.lixferox.app_tfg_2024.model.User
 
 class FirestoreDataSource : ViewModel() {
 
@@ -116,6 +117,31 @@ class FirestoreDataSource : ViewModel() {
             }
     }
 }
+fun obtainUserStats(
+    auth: FirebaseAuth,
+    db: FirebaseFirestore,
+    onResult: (Stats) -> Unit
+) {
+    val uid = auth.currentUser?.uid
+    db.collection(Tables.stats).whereEqualTo("uid", uid).get().addOnCompleteListener { task ->
+        if (task.isSuccessful) {
+            val document = task.result.documents.firstOrNull()
+            if (document != null) {
+                val statsUser = Stats(
+                    uid = document.getString("uid") ?: "",
+                    level = document.getLong("level")?.toInt() ?: 0,
+                    points = document.getLong("points")?.toInt() ?: 0,
+                    totalCompletedTasks = document.getLong("totalCompletedTasks")?.toInt() ?: 0,
+                    weekCompletedTasks = document.getLong("weekCompletedTasks")?.toInt() ?: 0,
+                    tasksInProgress = document.getLong("tasksInProgress")?.toInt() ?: 0,
+                    puntuation = document.getLong("puntuation")?.toInt() ?: 0,
+                    joinedIn = document.getTimestamp("joinedIn") ?: Timestamp.now()
+                )
+                onResult(statsUser)
+            }
+        }
+    }
+}
 
 fun obtainUserInfo(auth: FirebaseAuth, db: FirebaseFirestore, onResult: (User) -> Unit) {
     val uid = auth.currentUser?.uid
@@ -129,9 +155,6 @@ fun obtainUserInfo(auth: FirebaseAuth, db: FirebaseFirestore, onResult: (User) -
                     username = document.getString("username") ?: "",
                     birth = document.getTimestamp("birth") ?: Timestamp.now(),
                     isHelper = document.getBoolean("isHelper") ?: false,
-                    puntuation = document.getLong("puntuation")?.toInt() ?: 0,
-                    affiliated = document.getTimestamp("affiliated") ?: Timestamp.now(),
-                    level = document.getLong("level")?.toInt() ?: 0,
                     phone = document.getString("phone") ?: "",
                     address = document.getString("address") ?: ""
                 )

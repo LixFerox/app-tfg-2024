@@ -1,4 +1,4 @@
-package com.lixferox.app_tfg_2024.domain.model
+package com.lixferox.app_tfg_2024.model
 
 import com.google.firebase.Timestamp
 
@@ -10,9 +10,6 @@ data class User(
     val phone: String,
     val address: String,
     val isHelper: Boolean,
-    val puntuation: Int,
-    val affiliated: Timestamp,
-    val level: Int
 )
 
 data class Request(
@@ -31,4 +28,15 @@ data class Request(
     val acceptedByUid: String?,
     val dateCreated: Timestamp,
     val status:String
+)
+
+data class Stats(
+    val uid: String,
+    val level: Int,
+    val points: Int,
+    val totalCompletedTasks: Int,
+    val weekCompletedTasks: Int,
+    val tasksInProgress: Int,
+    val puntuation: Int,
+    val joinedIn: Timestamp
 )

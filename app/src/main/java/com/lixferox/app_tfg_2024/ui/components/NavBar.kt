@@ -33,7 +33,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
 import com.lixferox.app_tfg_2024.data.model.Tables
-import com.lixferox.app_tfg_2024.domain.model.Request
+import com.lixferox.app_tfg_2024.model.Request
 
 @Composable
 fun NavBar(

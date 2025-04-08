@@ -21,6 +21,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +29,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,12 +41,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
+import com.lixferox.app_tfg_2024.data.datasource.obtainUserInfo
+import com.lixferox.app_tfg_2024.data.datasource.obtainUserStats
 import com.lixferox.app_tfg_2024.data.model.Tables
+import com.lixferox.app_tfg_2024.model.Stats
+import com.lixferox.app_tfg_2024.model.User
 import com.lixferox.app_tfg_2024.ui.components.Header
 import com.lixferox.app_tfg_2024.ui.components.NavBar
+import java.util.Date
 
 @Composable
 fun ProfileInfoScreen(
@@ -104,6 +112,34 @@ private fun ProfileData(
     db: FirebaseFirestore,
     navigateToLogin: () -> Unit
 ) {
+    var currentStats by remember { mutableStateOf<Stats?>(null) }
+    var currentUser by remember { mutableStateOf<User?>(null) }
+
+    LaunchedEffect(auth.currentUser) {
+        obtainUserStats(auth, db) { obtainedStats  ->
+            currentStats=obtainedStats
+        }
+        obtainUserInfo(auth, db) { obtainedUser ->
+            currentUser = obtainedUser
+        }
+    }
+    if (currentUser == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    val username by remember { mutableStateOf(currentUser!!.username) }
+    val level by remember { mutableStateOf(currentStats!!.level) }
+    val puntuation by remember { mutableStateOf(currentStats!!.puntuation) }
+    val levelBar by remember { mutableStateOf(currentStats!!.points) }
+    val totalRequests by remember { mutableStateOf(currentStats!!.totalCompletedTasks) }
+    val joinedIn by remember { mutableStateOf(currentStats!!.joinedIn) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -113,12 +149,12 @@ private fun ProfileData(
     ) {
         var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
-        UserHeader()
-        LevelBar()
+        UserHeader(username, level)
+        LevelBar(levelBar)
         Spacer(Modifier.height(8.dp))
-        StatsSection()
+        StatsSection(puntuation, totalRequests)
         Spacer(Modifier.height(8.dp))
-        InfoSection()
+        InfoSection(joinedIn)
         RequestButton(auth, db, onError = {}, onSuccess = { navigateToLogin() })
         if (errorMessage != null) {
             AlertDialog(onDismissRequest = { errorMessage = null }, confirmButton = {
@@ -141,7 +177,7 @@ private fun ProfileData(
 }
 
 @Composable
-private fun UserHeader() {
+private fun UserHeader(username: String, level:Int) {
     Icon(
         painter = painterResource(R.drawable.profile),
         contentDescription = "Icono del perfil de usuario",
@@ -156,16 +192,23 @@ private fun UserHeader() {
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
         )
-        Text(
-            text = "Jorge Rosado Julián!",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF2196F3)
-        )
+        Row {
+            Text(
+                text = username,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF2196F3)
+            )
+            Text(
+                text = "!",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+            )
+        }
     }
 
     Text(
-        text = "Nivel 0",
+        text = "Nivel $level",
         style = MaterialTheme.typography.bodyLarge,
         fontWeight = FontWeight.SemiBold,
         color = Color.DarkGray
@@ -173,8 +216,10 @@ private fun UserHeader() {
 }
 
 @Composable
-private fun LevelBar() {
-    var level by remember { mutableStateOf(20f) }
+private fun LevelBar(levelBar: Int) {
+    var currentLevel=levelBar.toFloat()
+
+    var level by remember { mutableStateOf(currentLevel) }
 
     LinearProgressIndicator(
         progress = { level / 100f },
@@ -187,7 +232,8 @@ private fun LevelBar() {
 }
 
 @Composable
-private fun StatsSection() {
+private fun StatsSection(puntuation: Int, totalRequests: Int) {
+
     data class ItemMenu(
         val title: String,
         val data: String,
@@ -196,8 +242,8 @@ private fun StatsSection() {
     )
 
     val listItems = listOf(
-        ItemMenu(title = "5/5", data = "Puntuación", R.drawable.points, Color(0xFFFFC107)),
-        ItemMenu(title = "32", data = "Peticiones", R.drawable.request, Color(0xFF00BCD4)),
+        ItemMenu(title = "$puntuation/5", data = "Puntuación", R.drawable.points, Color(0xFFFFC107)),
+        ItemMenu(title = "$totalRequests", data = "Peticiones", R.drawable.request, Color(0xFF00BCD4)),
     )
 
     Row(
@@ -249,7 +295,30 @@ private fun StatsSection() {
 }
 
 @Composable
-private fun InfoSection() {
+private fun InfoSection(joinedIn: Timestamp) {
+    var joined by remember { mutableStateOf("") }
+    var typeJoined by remember { mutableStateOf("") }
+
+    val joinDate = joinedIn.toDate()
+    val currentDate = Date()
+
+    val diffMillis = currentDate.time - joinDate.time
+    val diffDays = (diffMillis / (1000 * 60 * 60 * 24)).toInt()
+
+    if (diffDays < 30) {
+        joined = diffDays.toString()
+        typeJoined = if (diffDays == 1) "Día" else "Días"
+    } else if (diffDays < 365) {
+        val diffMonths = diffDays / 30
+        joined = diffMonths.toString()
+        typeJoined = if (diffMonths == 1) "Mes" else "Meses"
+    } else {
+        val diffYears = diffDays / 365
+        joined = diffYears.toString()
+        typeJoined = if (diffYears == 1) "Año" else "Años"
+    }
+
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -292,12 +361,12 @@ private fun InfoSection() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "1",
+                        text = joined,
                         style = MaterialTheme.typography.displayLarge,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "año",
+                        text = typeJoined,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -332,7 +401,7 @@ private fun InfoSection() {
                     )
                     Icon(
                         painter = painterResource(R.drawable.graphic),
-                        contentDescription = "Icono de la sección antiguedad",
+                        contentDescription = "Icono del gráfico semanal",
                         tint = Color(0xFFFF9800)
                     )
                 }

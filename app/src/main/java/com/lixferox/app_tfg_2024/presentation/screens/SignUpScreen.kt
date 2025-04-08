@@ -47,7 +47,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
 import com.lixferox.app_tfg_2024.data.model.Tables
-import com.lixferox.app_tfg_2024.domain.model.User
+import com.lixferox.app_tfg_2024.model.Stats
+import com.lixferox.app_tfg_2024.model.User
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -356,8 +357,9 @@ private fun CreateAccountFirebase(
     }
 
     auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener { task ->
+        val uid = auth.currentUser?.uid.toString()
         if (task.isSuccessful) {
-            val user = auth.currentUser?.uid.toString()
+            val user = uid
             val currentDate = Timestamp.now()
             val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
             val convertBirth = format.parse(birth)
@@ -367,15 +369,24 @@ private fun CreateAccountFirebase(
                 username = username,
                 birth = Timestamp(convertBirth),
                 isHelper = isHelper,
-                puntuation = 0,
-                affiliated = currentDate,
-                level = 0,
                 address = address,
                 phone = phone
             )
             db.collection(Tables.users).add(currentUser).addOnCompleteListener { added ->
                 if (added.isSuccessful) {
-                    onSuccess()
+                    val statsUser = Stats(
+                        uid = uid,
+                        level = 0,
+                        points = 0,
+                        totalCompletedTasks = 0,
+                        weekCompletedTasks = 0,
+                        tasksInProgress = 0,
+                        puntuation = 0,
+                        joinedIn = currentDate
+                    )
+                    db.collection(Tables.stats).add(statsUser).addOnCompleteListener { stats ->
+                        onSuccess()
+                    }
                 }
             }
         } else {

@@ -38,7 +38,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.data.datasource.obtainUserInfo
 import com.lixferox.app_tfg_2024.data.model.Tables
-import com.lixferox.app_tfg_2024.domain.model.User
+import com.lixferox.app_tfg_2024.model.User
 import com.lixferox.app_tfg_2024.ui.components.Header
 import com.lixferox.app_tfg_2024.ui.components.NavBar
 import java.text.SimpleDateFormat
