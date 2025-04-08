@@ -15,6 +15,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
@@ -129,7 +130,7 @@ private fun CreateRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: Firebas
         onDismissRequest = { onDismiss() },
         confirmButton = {
             TextButton(onClick = {
-                CreateRequest(title, description, urgency, isHelper!!, uid!!, db, onDismiss)
+                createRequest(title, description, urgency, isHelper!!, uid!!, db, onDismiss)
                 onDismiss()
             }) { Text(text = "Crear") }
         },
@@ -183,7 +184,7 @@ private fun CreateRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: Firebas
                                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                             },
                             modifier = Modifier
-                                .menuAnchor()
+                                .menuAnchor(type = MenuAnchorType.PrimaryEditable, enabled = true)
                                 .fillMaxWidth()
                                 .padding(vertical = 16.dp),
                             shape = RoundedCornerShape(12.dp),
@@ -216,7 +217,7 @@ private fun CreateRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: Firebas
     )
 }
 
-private fun CreateRequest(
+private fun createRequest(
     title: String,
     description: String,
     urgency: String,

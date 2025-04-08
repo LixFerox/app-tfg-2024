@@ -47,7 +47,6 @@ import com.lixferox.app_tfg_2024.model.Request
 import com.lixferox.app_tfg_2024.ui.components.Header
 import com.lixferox.app_tfg_2024.ui.components.NavBar
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 @Composable
@@ -152,8 +151,8 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
                     val currentUser = task.result.documents.firstOrNull()
                     if (currentUser != null) {
                         isHelper = currentUser.getBoolean("helper") ?: false
-                        viewModel.getAcceptedRequest(db, auth) { task ->
-                            listRequest = task
+                        viewModel.getAcceptedRequest(db, auth) { requests ->
+                            listRequest = requests
                         }
                     }
                 }
@@ -171,7 +170,7 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
     }
 
     val listItems = listRequest.map { task ->
-        val dateObject = task.dateCreated.toDate() ?: Date()
+        val dateObject = task.dateCreated.toDate()
         val formatDate = SimpleDateFormat("dd/MM/yyyy hh:mm", Locale.getDefault())
         val dateTask = formatDate.format(dateObject)
 
@@ -345,11 +344,11 @@ private fun AlertRequest(onDismiss: () -> Unit, onAccept: () -> Unit, textModal:
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "${textModal} tarea",
+                    text = "$textModal tarea",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
-                Text(text = "¿Estás seguro que quieres ${textModal} la tarea?")
+                Text(text = "¿Estás seguro que quieres $textModal la tarea?")
             }
         })
 }

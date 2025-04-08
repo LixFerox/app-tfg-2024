@@ -2,7 +2,6 @@ package com.lixferox.app_tfg_2024.presentation.screens
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,6 +43,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
 import com.lixferox.app_tfg_2024.ui.components.Header
 import com.lixferox.app_tfg_2024.ui.components.NavBar
+import androidx.core.net.toUri
 
 @Composable
 fun HomeScreen(
@@ -116,7 +116,7 @@ private fun Content(modifier: Modifier = Modifier) {
 @Composable
 private fun WelcomeSection() {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row() {
+        Row {
             Text(
                 text = "¡Bienvenido,",
                 style = MaterialTheme.typography.headlineSmall,
@@ -297,7 +297,7 @@ private fun EmergencyButton(modifier: Modifier = Modifier) {
 
     Row(modifier.padding(8.dp)) {
         Button(
-            onClick = { CallPhone(context) },
+            onClick = { callPhone(context) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
@@ -313,7 +313,7 @@ private fun EmergencyButton(modifier: Modifier = Modifier) {
     }
 }
 
-private fun CallPhone(context: Context) {
-    val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:061"))
+private fun callPhone(context: Context) {
+    val intent = Intent(Intent.ACTION_DIAL, "tel:061".toUri())
     context.startActivity(intent)
 }

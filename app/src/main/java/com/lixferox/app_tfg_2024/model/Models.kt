@@ -15,19 +15,19 @@ data class User(
 data class Request(
     val id: String,
     val uidOlder: String?,
-    val uidHelper:String?,
+    val uidHelper: String?,
     val title: String,
     val description: String,
     val urgency: String?,
-    val olderUsername:String?,
-    val helperUsername:String?,
+    val olderUsername: String?,
+    val helperUsername: String?,
     val olderAddress: String?,
     val helperAddress: String?,
-    val olderPhone:String,
-    val helperPhone:String,
+    val olderPhone: String,
+    val helperPhone: String,
     val acceptedByUid: String?,
     val dateCreated: Timestamp,
-    val status:String
+    val status: String
 )
 
 data class Stats(
@@ -35,7 +35,7 @@ data class Stats(
     val level: Int,
     val points: Int,
     val totalCompletedTasks: Int,
-    val weekCompletedTasks: Int,
+    val weekCompletedTasks: List<Double>,
     val tasksInProgress: Int,
     val puntuation: Int,
     val joinedIn: Timestamp

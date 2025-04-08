@@ -27,6 +27,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -53,7 +54,6 @@ import com.lixferox.app_tfg_2024.model.Request
 import com.lixferox.app_tfg_2024.ui.components.Header
 import com.lixferox.app_tfg_2024.ui.components.NavBar
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 @Composable
@@ -146,7 +146,7 @@ private fun Content(
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                 },
                 modifier = Modifier
-                    .menuAnchor()
+                    .menuAnchor(type = MenuAnchorType.PrimaryEditable, enabled = true)
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
                 shape = RoundedCornerShape(12.dp),
@@ -206,8 +206,8 @@ private fun ListRequest(
                     val currentUser = task.result.documents.firstOrNull()
                     if (currentUser != null) {
                         isHelper = currentUser.getBoolean("helper") ?: false
-                        viewModel.obtainAllRequest(db, isHelper!!) { task ->
-                            listRequest = task
+                        viewModel.obtainAllRequest(db, isHelper!!) { requests ->
+                            listRequest = requests
                         }
                     }
                 }
@@ -225,7 +225,7 @@ private fun ListRequest(
     }
 
     val listItems = listRequest.map { task ->
-        val dateObject = task.dateCreated.toDate() ?: Date()
+        val dateObject = task.dateCreated.toDate()
         val formatDate = SimpleDateFormat("dd/MM/yyyy hh:mm", Locale.getDefault())
         val dateTask = formatDate.format(dateObject)
 

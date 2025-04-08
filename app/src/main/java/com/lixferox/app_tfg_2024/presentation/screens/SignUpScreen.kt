@@ -255,7 +255,7 @@ private fun Form(navigateToLogin: () -> Unit, auth: FirebaseAuth, db: FirebaseFi
 
             Button(
                 onClick = {
-                    CreateAccountFirebase(
+                    createAccountFirebase(
                         onSuccess = { navigateToLogin() },
                         onError = { message -> errorMessage = message },
                         auth,
@@ -333,7 +333,7 @@ private fun SignUp(navigateToLogin: () -> Unit) {
     }
 }
 
-private fun CreateAccountFirebase(
+private fun createAccountFirebase(
     onSuccess: () -> Unit,
     onError: (String) -> Unit,
     auth: FirebaseAuth,
@@ -374,12 +374,13 @@ private fun CreateAccountFirebase(
             )
             db.collection(Tables.users).add(currentUser).addOnCompleteListener { added ->
                 if (added.isSuccessful) {
+                    val listTasksWeek = listOf(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
                     val statsUser = Stats(
                         uid = uid,
                         level = 0,
                         points = 0,
                         totalCompletedTasks = 0,
-                        weekCompletedTasks = 0,
+                        weekCompletedTasks = listTasksWeek,
                         tasksInProgress = 0,
                         puntuation = 0,
                         joinedIn = currentDate

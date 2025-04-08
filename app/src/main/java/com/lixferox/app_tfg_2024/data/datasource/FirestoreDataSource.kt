@@ -78,8 +78,8 @@ class FirestoreDataSource : ViewModel() {
                     db.collection(Tables.requests).whereEqualTo("id", index).get()
                         .addOnSuccessListener { request ->
                             if (!request.isEmpty) {
-                                val document = request.documents.first()
-                                document.reference.update(updateFields)
+                                val requestFind = request.documents.first()
+                                requestFind.reference.update(updateFields)
                             }
                         }
                 }
@@ -128,15 +128,17 @@ fun obtainUserStats(
         if (task.isSuccessful) {
             val document = task.result.documents.firstOrNull()
             if (document != null) {
+                val weekCompletedTasks =
+                    document.get("weekCompletedTasks") as? List<Double> ?: emptyList()
                 val statsUser = Stats(
                     uid = document.getString("uid") ?: "",
                     level = document.getLong("level")?.toInt() ?: 0,
                     points = document.getLong("points")?.toInt() ?: 0,
                     totalCompletedTasks = document.getLong("totalCompletedTasks")?.toInt() ?: 0,
-                    weekCompletedTasks = document.getLong("weekCompletedTasks")?.toInt() ?: 0,
                     tasksInProgress = document.getLong("tasksInProgress")?.toInt() ?: 0,
                     puntuation = document.getLong("puntuation")?.toInt() ?: 0,
-                    joinedIn = document.getTimestamp("joinedIn") ?: Timestamp.now()
+                    joinedIn = document.getTimestamp("joinedIn") ?: Timestamp.now(),
+                    weekCompletedTasks = weekCompletedTasks
                 )
                 onResult(statsUser)
             }

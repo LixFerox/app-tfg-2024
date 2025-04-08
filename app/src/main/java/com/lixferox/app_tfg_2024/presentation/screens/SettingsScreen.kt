@@ -223,7 +223,7 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
     if (showModal) {
         ChangeSettings(onDismiss = { showModal = false }, onAccept = {
             showModal = false
-            UpdateInfo(auth, db, email, username, phone, birth, address)
+            updateInfo(auth, db, email, username, phone, birth, address)
         })
     }
 }
@@ -249,7 +249,7 @@ private fun ChangeSettings(onDismiss: () -> Unit, onAccept: () -> Unit) {
         })
 }
 
-private fun UpdateInfo(
+private fun updateInfo(
     auth: FirebaseAuth,
     db: FirebaseFirestore,
     email: String,

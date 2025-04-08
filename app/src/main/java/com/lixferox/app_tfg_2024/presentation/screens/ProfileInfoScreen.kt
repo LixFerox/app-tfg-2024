@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -32,6 +31,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -58,7 +59,6 @@ import com.lixferox.app_tfg_2024.ui.components.Header
 import com.lixferox.app_tfg_2024.ui.components.NavBar
 import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.models.HorizontalIndicatorProperties
-import ir.ehsannarmani.compose_charts.models.LabelProperties
 import ir.ehsannarmani.compose_charts.models.Line
 import java.util.Date
 
@@ -142,11 +142,12 @@ private fun ProfileData(
     }
 
     val username by remember { mutableStateOf(currentUser!!.username) }
-    val level by remember { mutableStateOf(currentStats!!.level) }
-    val puntuation by remember { mutableStateOf(currentStats!!.puntuation) }
-    val levelBar by remember { mutableStateOf(currentStats!!.points) }
-    val totalRequests by remember { mutableStateOf(currentStats!!.totalCompletedTasks) }
+    val level by remember { mutableIntStateOf(currentStats!!.level) }
+    val puntuation by remember { mutableIntStateOf(currentStats!!.puntuation) }
+    val levelBar by remember { mutableIntStateOf(currentStats!!.points) }
+    val totalRequests by remember { mutableIntStateOf(currentStats!!.totalCompletedTasks) }
     val joinedIn by remember { mutableStateOf(currentStats!!.joinedIn) }
+    val listTasksWeek by remember { mutableStateOf(currentStats?.weekCompletedTasks) }
 
     Column(
         modifier = modifier
@@ -162,7 +163,7 @@ private fun ProfileData(
         Spacer(Modifier.height(8.dp))
         StatsSection(puntuation, totalRequests)
         Spacer(Modifier.height(8.dp))
-        InfoSection(joinedIn)
+        InfoSection(joinedIn, listTasksWeek)
         RequestButton(auth, db, onError = {}, onSuccess = { navigateToLogin() })
         if (errorMessage != null) {
             AlertDialog(onDismissRequest = { errorMessage = null }, confirmButton = {
@@ -225,9 +226,7 @@ private fun UserHeader(username: String, level: Int) {
 
 @Composable
 private fun LevelBar(levelBar: Int) {
-    var currentLevel = levelBar.toFloat()
-
-    var level by remember { mutableStateOf(currentLevel) }
+    val level by remember { mutableFloatStateOf(levelBar.toFloat()) }
 
     LinearProgressIndicator(
         progress = { level / 100f },
@@ -313,7 +312,7 @@ private fun StatsSection(puntuation: Int, totalRequests: Int) {
 }
 
 @Composable
-private fun InfoSection(joinedIn: Timestamp) {
+private fun InfoSection(joinedIn: Timestamp, listTasksWeek: List<Double>?) {
     var joined by remember { mutableStateOf("") }
     var typeJoined by remember { mutableStateOf("") }
 
@@ -336,10 +335,6 @@ private fun InfoSection(joinedIn: Timestamp) {
         typeJoined = if (diffYears == 1) "Año" else "Años"
     }
 
-    val listTasks= listOf(
-        0.0, 1.0
-    )
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -358,12 +353,14 @@ private fun InfoSection(joinedIn: Timestamp) {
                     .fillMaxHeight()
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(
+                    8.dp,
+                    alignment = Alignment.CenterVertically
+                )
             ) {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .size(32.dp),
+                        .fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
@@ -378,7 +375,11 @@ private fun InfoSection(joinedIn: Timestamp) {
                     )
                 }
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(
+                        8.dp,
+                        alignment = Alignment.CenterHorizontally
+                    ),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
@@ -388,8 +389,8 @@ private fun InfoSection(joinedIn: Timestamp) {
                     )
                     Text(
                         text = typeJoined,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium,
                     )
                 }
 
@@ -428,14 +429,15 @@ private fun InfoSection(joinedIn: Timestamp) {
                 }
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth().height(100.dp)
+                        .fillMaxWidth()
+                        .height(100.dp)
                 ) {
                     LineChart(
                         data = remember {
                             listOf(
                                 Line(
                                     label = "Tareas",
-                                    values = listTasks,
+                                    values = listTasksWeek!!,
                                     color = Brush.radialGradient(
                                         colors = listOf(Color(0xFF00BCD4), Color(0xFF00BCD4))
                                     )
@@ -486,6 +488,7 @@ private fun RequestButton(
                                                         auth.currentUser?.delete()
                                                             ?.addOnCompleteListener { task ->
                                                                 if (task.isSuccessful) {
+                                                                    auth.signOut()
                                                                     onSuccess()
                                                                 } else {
                                                                     onError(
