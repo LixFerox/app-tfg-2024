@@ -314,7 +314,6 @@ private fun EmergencyButton(modifier: Modifier = Modifier) {
 }
 
 private fun CallPhone(context: Context) {
-    val intent = Intent(Intent.ACTION_CALL)
-    intent.data = Uri.parse("tel:061")
+    val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:061"))
     context.startActivity(intent)
 }

@@ -71,4 +71,6 @@ dependencies {
     implementation(libs.firebase.auth)
     // FIRESTORE
     implementation(libs.firebase.firestore)
+    //DIAGRAMAS
+    implementation (libs.compose.charts)
 }

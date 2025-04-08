@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -37,10 +38,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -52,6 +56,10 @@ import com.lixferox.app_tfg_2024.model.Stats
 import com.lixferox.app_tfg_2024.model.User
 import com.lixferox.app_tfg_2024.ui.components.Header
 import com.lixferox.app_tfg_2024.ui.components.NavBar
+import ir.ehsannarmani.compose_charts.LineChart
+import ir.ehsannarmani.compose_charts.models.HorizontalIndicatorProperties
+import ir.ehsannarmani.compose_charts.models.LabelProperties
+import ir.ehsannarmani.compose_charts.models.Line
 import java.util.Date
 
 @Composable
@@ -116,8 +124,8 @@ private fun ProfileData(
     var currentUser by remember { mutableStateOf<User?>(null) }
 
     LaunchedEffect(auth.currentUser) {
-        obtainUserStats(auth, db) { obtainedStats  ->
-            currentStats=obtainedStats
+        obtainUserStats(auth, db) { obtainedStats ->
+            currentStats = obtainedStats
         }
         obtainUserInfo(auth, db) { obtainedUser ->
             currentUser = obtainedUser
@@ -177,7 +185,7 @@ private fun ProfileData(
 }
 
 @Composable
-private fun UserHeader(username: String, level:Int) {
+private fun UserHeader(username: String, level: Int) {
     Icon(
         painter = painterResource(R.drawable.profile),
         contentDescription = "Icono del perfil de usuario",
@@ -217,7 +225,7 @@ private fun UserHeader(username: String, level:Int) {
 
 @Composable
 private fun LevelBar(levelBar: Int) {
-    var currentLevel=levelBar.toFloat()
+    var currentLevel = levelBar.toFloat()
 
     var level by remember { mutableStateOf(currentLevel) }
 
@@ -242,8 +250,18 @@ private fun StatsSection(puntuation: Int, totalRequests: Int) {
     )
 
     val listItems = listOf(
-        ItemMenu(title = "$puntuation/5", data = "Puntuación", R.drawable.points, Color(0xFFFFC107)),
-        ItemMenu(title = "$totalRequests", data = "Peticiones", R.drawable.request, Color(0xFF00BCD4)),
+        ItemMenu(
+            title = "$puntuation/5",
+            data = "Puntuación",
+            R.drawable.points,
+            Color(0xFFFFC107)
+        ),
+        ItemMenu(
+            title = "$totalRequests",
+            data = "Peticiones",
+            R.drawable.request,
+            Color(0xFF00BCD4)
+        ),
     )
 
     Row(
@@ -318,6 +336,9 @@ private fun InfoSection(joinedIn: Timestamp) {
         typeJoined = if (diffYears == 1) "Año" else "Años"
     }
 
+    val listTasks= listOf(
+        0.0, 1.0
+    )
 
     Row(
         modifier = Modifier
@@ -405,13 +426,31 @@ private fun InfoSection(joinedIn: Timestamp) {
                         tint = Color(0xFFFF9800)
                     )
                 }
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth().height(100.dp)
                 ) {
-
+                    LineChart(
+                        data = remember {
+                            listOf(
+                                Line(
+                                    label = "Tareas",
+                                    values = listTasks,
+                                    color = Brush.radialGradient(
+                                        colors = listOf(Color(0xFF00BCD4), Color(0xFF00BCD4))
+                                    )
+                                )
+                            )
+                        },
+                        indicatorProperties = HorizontalIndicatorProperties(
+                            textStyle = TextStyle.Default.copy(
+                                color = Color.Transparent,
+                                fontSize = 0.sp
+                            ),
+                        ),
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
-
             }
         }
     }

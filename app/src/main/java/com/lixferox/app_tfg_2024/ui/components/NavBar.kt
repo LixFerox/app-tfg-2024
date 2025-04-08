@@ -5,9 +5,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -87,6 +92,7 @@ fun NavBar(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CreateRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: FirebaseFirestore) {
     val uid = auth.currentUser?.uid
@@ -94,6 +100,8 @@ private fun CreateRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: Firebas
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var urgency by remember { mutableStateOf("") }
+    var expanded by remember { mutableStateOf(false) }
+    val opciones = listOf("Alta", "Media", "Baja")
 
     LaunchedEffect(uid) {
         uid.let {
@@ -162,18 +170,45 @@ private fun CreateRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: Firebas
                     singleLine = true
                 )
                 if (!isHelper!!) {
-                    OutlinedTextField(
-                        value = urgency,
-                        onValueChange = { urgency = it },
-                        label = { Text(text = "Nivel de urgencia") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF2196F3),
-                            unfocusedBorderColor = Color.LightGray
-                        ),
-                        singleLine = true
-                    )
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = !expanded }
+                    ) {
+                        OutlinedTextField(
+                            value = urgency,
+                            onValueChange = { urgency = it },
+                            readOnly = true,
+                            label = { Text("Nivel de urgencia") },
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                            },
+                            modifier = Modifier
+                                .menuAnchor()
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF2196F3),
+                                unfocusedBorderColor = Color.LightGray
+                            ),
+                            singleLine = true
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            opciones.map { opcion ->
+                                DropdownMenuItem(
+                                    text = { Text(opcion) },
+                                    onClick = {
+                                        urgency = opcion
+                                        expanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
 
             }

@@ -21,6 +21,10 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -106,6 +110,7 @@ fun SearchRequestsScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Content(
     modifier: Modifier = Modifier,
@@ -113,6 +118,8 @@ private fun Content(
     db: FirebaseFirestore,
     viewModel: FirestoreDataSource
 ) {
+    var expanded by remember { mutableStateOf(false) }
+    val opciones = listOf("Alta", "Media", "Baja")
     var filter by remember { mutableStateOf("") }
     Column(
         modifier = modifier
@@ -126,20 +133,45 @@ private fun Content(
             color = Color(0xFF2196F3)
         )
         Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = filter,
-            onValueChange = { filter = it },
-            label = { Text(text = "Nivel de urgencia") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFF2196F3),
-                unfocusedBorderColor = Color.LightGray
-            ),
-            singleLine = true
-        )
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded }
+        ) {
+            OutlinedTextField(
+                value = filter,
+                onValueChange = { filter = it },
+                readOnly = true,
+                label = { Text("Nivel de urgencia") },
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF2196F3),
+                    unfocusedBorderColor = Color.LightGray
+                ),
+                singleLine = true
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                opciones.map { opcion ->
+                    DropdownMenuItem(
+                        text = { Text(opcion) },
+                        onClick = {
+                            filter = opcion
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
         ListRequest(filter, auth, db, viewModel)
     }
 }
@@ -215,7 +247,7 @@ private fun ListRequest(
     }
 
 
-    if(filteredItems.isEmpty()){
+    if (filteredItems.isEmpty()) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -225,7 +257,7 @@ private fun ListRequest(
                 style = MaterialTheme.typography.titleMedium
             )
         }
-    }else{
+    } else {
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
         ) {

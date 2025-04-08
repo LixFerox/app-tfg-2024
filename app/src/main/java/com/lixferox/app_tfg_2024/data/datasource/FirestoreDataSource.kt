@@ -117,6 +117,7 @@ class FirestoreDataSource : ViewModel() {
             }
     }
 }
+
 fun obtainUserStats(
     auth: FirebaseAuth,
     db: FirebaseFirestore,

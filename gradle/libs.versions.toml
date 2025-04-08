@@ -15,6 +15,8 @@ kotlinSerialization = "1.6.3"
 fireBaseBom = "33.1.1"
 services = "4.4.2"
 crashlytics = "3.0.2"
+# DIAGRAMAS
+composeCharts = "0.1.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -41,6 +43,8 @@ firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
 firebase-auth = { module = "com.google.firebase:firebase-auth-ktx"}
 # FIRESTORE
 firebase-firestore = {module = "com.google.firebase:firebase-firestore" }
+# DIAGRAMAS
+compose-charts = { module = "io.github.ehsannarmani:compose-charts", version.ref = "composeCharts" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
