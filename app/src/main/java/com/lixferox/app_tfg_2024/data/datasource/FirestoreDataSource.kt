@@ -92,7 +92,8 @@ class FirestoreDataSource : ViewModel() {
         onResult: (List<Request>) -> Unit
     ) {
         val uid = auth.currentUser?.uid
-        db.collection(Tables.requests).whereEqualTo("acceptedByUid", uid).get()
+        db.collection(Tables.requests).whereEqualTo("acceptedByUid", uid)
+            .whereEqualTo("status", "Aceptada").get()
             .addOnCompleteListener { task ->
                 val requestList = task.result.documents.map { document ->
                     Request(
@@ -114,6 +115,41 @@ class FirestoreDataSource : ViewModel() {
                     )
                 }
                 onResult(requestList)
+            }
+    }
+
+    fun actionAcceptedRequest(
+        index: String,
+        action: String,
+        db: FirebaseFirestore,
+        auth: FirebaseAuth
+    ) {
+        val uid = auth.currentUser?.uid
+        db.collection(Tables.users).whereEqualTo("uid", uid).get()
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val updateFields = if (action == "cancel") {
+                        mapOf(
+                            "acceptedByUid" to "",
+                            "status" to "Creada",
+                            "helperUsername" to "",
+                            "uidHelper" to "",
+                            "helperPhone" to "",
+                            "helperAddress" to ""
+                        )
+                    } else {
+                        mapOf(
+                            "status" to "Completada",
+                        )
+                    }
+                    db.collection(Tables.requests).whereEqualTo("id", index).get()
+                        .addOnSuccessListener { request ->
+                            if (!request.isEmpty) {
+                                val requestFind = request.documents.first()
+                                requestFind.reference.update(updateFields)
+                            }
+                        }
+                }
             }
     }
 }
@@ -166,4 +202,3 @@ fun obtainUserInfo(auth: FirebaseAuth, db: FirebaseFirestore, onResult: (User) -
         }
     }
 }
-

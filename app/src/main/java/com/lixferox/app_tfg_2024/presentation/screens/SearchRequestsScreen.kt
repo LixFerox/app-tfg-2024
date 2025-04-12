@@ -25,6 +25,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
@@ -118,9 +119,34 @@ private fun Content(
     db: FirebaseFirestore,
     viewModel: FirestoreDataSource
 ) {
+    val uid = auth.currentUser?.uid
+    var isHelper by remember { mutableStateOf<Boolean?>(null) }
     var expanded by remember { mutableStateOf(false) }
-    val opciones = listOf("Alta", "Media", "Baja")
+    val opciones = listOf("Quitar filtro", "Alta", "Media", "Baja")
     var filter by remember { mutableStateOf("") }
+
+    LaunchedEffect(uid) {
+        uid.let {
+            db.collection(Tables.users).whereEqualTo("uid", uid).get()
+                .addOnCompleteListener { task ->
+                    val currentUser = task.result.documents.firstOrNull()
+                    if (currentUser != null) {
+                        isHelper = currentUser.getBoolean("helper") ?: false
+                    }
+                }
+        }
+    }
+
+    if (isHelper == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize(),
@@ -133,42 +159,61 @@ private fun Content(
             color = Color(0xFF2196F3)
         )
         Spacer(modifier = Modifier.height(8.dp))
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded }
-        ) {
-            OutlinedTextField(
-                value = filter,
-                onValueChange = { filter = it },
-                readOnly = true,
-                label = { Text("Nivel de urgencia") },
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                },
-                modifier = Modifier
-                    .menuAnchor(type = MenuAnchorType.PrimaryEditable, enabled = true)
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF2196F3),
-                    unfocusedBorderColor = Color.LightGray
-                ),
-                singleLine = true
-            )
-
-            ExposedDropdownMenu(
+        if (isHelper == true) {
+            ExposedDropdownMenuBox(
                 expanded = expanded,
-                onDismissRequest = { expanded = false }
+                onExpandedChange = { expanded = !expanded }
             ) {
-                opciones.map { opcion ->
-                    DropdownMenuItem(
-                        text = { Text(opcion) },
-                        onClick = {
-                            filter = opcion
-                            expanded = false
+                OutlinedTextField(
+                    value = filter,
+                    onValueChange = { filter = it },
+                    readOnly = true,
+                    label = { Text("Nivel de urgencia") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                    },
+                    modifier = Modifier
+                        .menuAnchor(type = MenuAnchorType.PrimaryEditable, enabled = true)
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF2196F3),
+                        unfocusedBorderColor = Color.LightGray
+                    ),
+                    singleLine = true
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    opciones.map { opcion ->
+                        if (opcion == "Quitar filtro") {
+                            HorizontalDivider(modifier = Modifier.height(4.dp))
+                            DropdownMenuItem(
+                                text = {
+                                    Text(opcion)
+                                },
+                                onClick = {
+                                    filter = ""
+                                    expanded = false
+                                }
+                            )
+                            HorizontalDivider(modifier = Modifier.height(4.dp))
+                        } else {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(opcion)
+                                },
+                                onClick = {
+                                    filter = opcion
+                                    expanded = false
+                                }
+                            )
                         }
-                    )
+
+                    }
                 }
             }
         }

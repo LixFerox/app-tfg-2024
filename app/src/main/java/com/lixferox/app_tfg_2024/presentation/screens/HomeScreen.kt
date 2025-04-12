@@ -2,6 +2,8 @@ package com.lixferox.app_tfg_2024.presentation.screens
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,11 +25,17 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -44,7 +52,15 @@ import com.lixferox.app_tfg_2024.R
 import com.lixferox.app_tfg_2024.ui.components.Header
 import com.lixferox.app_tfg_2024.ui.components.NavBar
 import androidx.core.net.toUri
+import com.lixferox.app_tfg_2024.data.datasource.obtainUserInfo
+import com.lixferox.app_tfg_2024.data.datasource.obtainUserStats
+import com.lixferox.app_tfg_2024.model.Stats
+import com.lixferox.app_tfg_2024.model.User
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeScreen(
     paddingValues: PaddingValues,
@@ -89,15 +105,41 @@ fun HomeScreen(
             Content(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 16.dp), auth, db
             )
         }
     }
 
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-private fun Content(modifier: Modifier = Modifier) {
+private fun Content(modifier: Modifier = Modifier, auth: FirebaseAuth, db: FirebaseFirestore) {
+    var currentStats by remember { mutableStateOf<Stats?>(null) }
+    var currentUser by remember { mutableStateOf<User?>(null) }
+
+    LaunchedEffect(auth.currentUser) {
+        obtainUserStats(auth, db) { obtainedStats ->
+            currentStats = obtainedStats
+        }
+        obtainUserInfo(auth, db) { obtainedUser ->
+            currentUser = obtainedUser
+        }
+    }
+    if (currentUser == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    val username by remember { mutableStateOf(currentUser!!.username) }
+    val totalCompletedTasks by remember { mutableStateOf(currentStats!!.totalCompletedTasks) }
+    val tasksInProgress by remember { mutableStateOf(currentStats!!.tasksInProgress) }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = modifier
@@ -105,16 +147,24 @@ private fun Content(modifier: Modifier = Modifier) {
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            WelcomeSection()
-            CardsSection()
+            WelcomeSection(auth, db, username)
+            CardsSection(totalCompletedTasks, tasksInProgress)
             RecientlyActivitySection()
         }
         EmergencyButton(modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-private fun WelcomeSection() {
+private fun WelcomeSection(auth: FirebaseAuth, db: FirebaseFirestore, username: String) {
+    val currentDateTime = LocalDateTime.now()
+    val locale = Locale("es", "ES")
+    val dateFormatter = DateTimeFormatter.ofPattern("EEEE, dd 'de' MMMM", locale)
+    val timeFormatter = DateTimeFormatter.ofPattern("hh:mm a", locale)
+    val formattedDate = currentDateTime.format(dateFormatter)
+    val formattedTime = currentDateTime.format(timeFormatter)
+
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row {
             Text(
@@ -125,7 +175,7 @@ private fun WelcomeSection() {
             Spacer(modifier = Modifier.width(8.dp))
             Row {
                 Text(
-                    text = "Jorge Rosado Julián",
+                    text = username,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF2196F3)
@@ -144,7 +194,7 @@ private fun WelcomeSection() {
                 contentDescription = "Icono de calendario", tint = Color.Gray
             )
             Spacer(modifier = Modifier.width(4.dp))
-            Text(text = "Lunes, 23 de marzo", color = Color.Gray)
+            Text(text = formattedDate, color = Color.Gray)
 
             Spacer(modifier = Modifier.width(16.dp))
             Icon(
@@ -153,13 +203,13 @@ private fun WelcomeSection() {
                 tint = Color.Gray
             )
             Spacer(modifier = Modifier.width(4.dp))
-            Text(text = "9:55 AM", color = Color.Gray)
+            Text(text = formattedTime, color = Color.Gray)
         }
     }
 }
 
 @Composable
-private fun CardsSection() {
+private fun CardsSection(totalCompletedTasks: Int, tasksInProgress: Int) {
     data class ItemCard(
         val title: String,
         val description: String,
@@ -170,7 +220,7 @@ private fun CardsSection() {
     val listItems = listOf(
         ItemCard(
             title = "Tareas completadas",
-            description = "0/20",
+            description = "$totalCompletedTasks/20",
             icon = R.drawable.completed,
             color = Color(
                 0xFF8BC34A
@@ -178,7 +228,7 @@ private fun CardsSection() {
         ),
         ItemCard(
             title = "Tareas en progreso",
-            description = "2",
+            description = "$tasksInProgress",
             icon = R.drawable.in_progress,
             color = Color(0xFFFFEB3B)
         ),

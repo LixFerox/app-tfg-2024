@@ -1,5 +1,7 @@
 package com.lixferox.app_tfg_2024.presentation.screens
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,10 +36,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
@@ -128,20 +132,24 @@ private fun Content(
 
 @Composable
 private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: FirestoreDataSource) {
+    val context = LocalContext.current
     var showModal by remember { mutableStateOf(false) }
     var isHelper by remember { mutableStateOf<Boolean?>(null) }
     var textModal by remember { mutableStateOf("") }
     var onAcceptAction by remember { mutableStateOf({}) }
     var listRequest by remember { mutableStateOf<List<Request>>(emptyList()) }
+    var indexTask by remember { mutableStateOf<String?>(null) }
 
     val uid = auth.currentUser?.uid
 
     data class ItemMenu(
+        val id: String,
         val title: String,
         val description: String,
         val username: String,
         val address: String,
-        val date: String
+        val date: String,
+        val phone: String
     )
 
     LaunchedEffect(uid) {
@@ -175,17 +183,19 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
         val dateTask = formatDate.format(dateObject)
 
         ItemMenu(
+            id = task.id,
             title = task.title,
             description = task.description,
             username = if (isHelper == true) task.olderUsername
                 ?: "Usuario desconocido" else task.helperUsername ?: "Desconocida",
             address = if (isHelper == true) task.olderAddress
                 ?: "Usuario desconocido" else task.helperAddress ?: "Desconocida",
-            date = dateTask
+            date = dateTask,
+            phone = if (isHelper == true) task.olderPhone else task.helperPhone
         )
     }
 
-    if(listItems.isEmpty()){
+    if (listItems.isEmpty()) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -195,7 +205,7 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
                 style = MaterialTheme.typography.titleMedium
             )
         }
-    }else{
+    } else {
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
         ) {
@@ -290,13 +300,25 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
                         ) {
                             Button(
                                 onClick = {
+
                                     showModal = true
                                     textModal = "Completar"
                                     onAcceptAction = {
-
+                                        indexTask = item.id
+                                        viewModel.actionAcceptedRequest(
+                                            indexTask!!,
+                                            "complete",
+                                            db,
+                                            auth
+                                        )
+                                        showModal = false
                                     }
                                 },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(
+                                        0xFF4CAF50
+                                    )
+                                ),
                             ) {
                                 Text(
                                     text = "Completar",
@@ -306,16 +328,48 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
                             }
                             Button(
                                 onClick = {
+
                                     showModal = true
                                     textModal = "Cancelar"
                                     onAcceptAction = {
-
+                                        indexTask = item.id
+                                        viewModel.actionAcceptedRequest(
+                                            indexTask!!,
+                                            "cancel",
+                                            db,
+                                            auth
+                                        )
+                                        showModal = false
                                     }
                                 },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336)),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(
+                                        0xFFF44336
+                                    )
+                                ),
                             ) {
                                 Text(
                                     text = "Cancelar",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Button(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    callPhone(context, item.phone)
+                                }, colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF2196F3)
+                                )
+                            ) {
+                                Text(
+                                    "Llamar",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                 )
@@ -351,4 +405,9 @@ private fun AlertRequest(onDismiss: () -> Unit, onAccept: () -> Unit, textModal:
                 Text(text = "¿Estás seguro que quieres $textModal la tarea?")
             }
         })
+}
+
+private fun callPhone(context: Context, phone: String) {
+    val intent = Intent(Intent.ACTION_DIAL, "tel:$phone".toUri())
+    context.startActivity(intent)
 }
