@@ -1,7 +1,5 @@
 package com.lixferox.app_tfg_2024.presentation.screens
 
-import android.content.Context
-import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,10 +39,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
+import com.lixferox.app_tfg_2024.common.callPhone
 import com.lixferox.app_tfg_2024.data.datasource.FirestoreDataSource
 import com.lixferox.app_tfg_2024.data.model.Tables
 import com.lixferox.app_tfg_2024.model.Request
@@ -261,6 +259,7 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
                                 Text(
                                     text = item.username,
                                     style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
                                 )
                             }
                         }
@@ -402,12 +401,7 @@ private fun AlertRequest(onDismiss: () -> Unit, onAccept: () -> Unit, textModal:
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
-                Text(text = "¿Estás seguro que quieres $textModal la tarea?")
+                Text(text = "¿Estás seguro que quieres ${textModal.uppercase()} la tarea?")
             }
         })
-}
-
-private fun callPhone(context: Context, phone: String) {
-    val intent = Intent(Intent.ACTION_DIAL, "tel:$phone".toUri())
-    context.startActivity(intent)
 }

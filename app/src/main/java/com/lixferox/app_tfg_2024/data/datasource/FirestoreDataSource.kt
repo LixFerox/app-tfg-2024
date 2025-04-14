@@ -1,16 +1,20 @@
 package com.lixferox.app_tfg_2024.data.datasource
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.data.model.Tables
+import com.lixferox.app_tfg_2024.model.Activity
 import com.lixferox.app_tfg_2024.model.Request
 import com.lixferox.app_tfg_2024.model.Stats
 import com.lixferox.app_tfg_2024.model.User
+import java.sql.Time
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class FirestoreDataSource : ViewModel() {
-
     fun obtainAllRequest(
         db: FirebaseFirestore,
         isHelper: Boolean,
@@ -152,6 +156,30 @@ class FirestoreDataSource : ViewModel() {
                 }
             }
     }
+
+    fun obtainActivity(
+        auth: FirebaseAuth,
+        db: FirebaseFirestore,
+        onResult: (List<Activity>) -> Unit
+    ) {
+        val uid = auth.currentUser?.uid
+        db.collection(Tables.activity).whereEqualTo("uid", uid).get()
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val activityList = task.result.documents.map { activity ->
+                        Activity(
+                            uid = activity.getString("uid") ?: "",
+                            time = activity.getTimestamp("time") ?: Timestamp.now(),
+                            title = activity.getString("title") ?: "",
+                            description = activity.getString("description") ?: ""
+                        )
+                    }
+                    onResult(activityList)
+                }
+
+            }
+    }
+
 }
 
 fun obtainUserStats(
@@ -201,4 +229,128 @@ fun obtainUserInfo(auth: FirebaseAuth, db: FirebaseFirestore, onResult: (User) -
             }
         }
     }
+}
+
+fun createRequest(
+    title: String,
+    description: String,
+    urgency: String,
+    isHelper: Boolean,
+    uid: String,
+    db: FirebaseFirestore,
+    onSuccess: () -> Unit
+) {
+    db.collection(Tables.users).whereEqualTo("uid", uid).get().addOnCompleteListener { task ->
+        val document = task.result.documents.firstOrNull()
+        if (document != null) {
+            val username = document.getString("username")
+            val address = document.getString("address")
+            val phone = document.getString("phone")
+            val docRef = db.collection(Tables.requests).document()
+            val currentRequest = Request(
+                id = docRef.id,
+                uidOlder = if (!isHelper) uid else "",
+                uidHelper = if (isHelper) uid else "",
+                title = title,
+                description = description,
+                urgency = if (!isHelper) urgency else "",
+                olderUsername = if (!isHelper) username else "",
+                helperUsername = if (isHelper) username else "",
+                olderAddress = if (!isHelper) address else "",
+                helperAddress = if (isHelper) address else "",
+                olderPhone = if (!isHelper) phone ?: "" else "",
+                helperPhone = if (isHelper) document.getString("phone") ?: "" else "",
+                acceptedByUid = "",
+                dateCreated = Timestamp.now(),
+                status = "Creada"
+            )
+            db.collection(Tables.requests).add(currentRequest).addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onSuccess()
+                }
+            }
+        }
+    }
+}
+
+fun updateInfo(
+    auth: FirebaseAuth,
+    db: FirebaseFirestore,
+    email: String,
+    username: String,
+    phone: String,
+    birth: String,
+    address: String
+) {
+    val uid = auth.currentUser?.uid
+    db.collection(Tables.users).whereEqualTo("uid", uid).get().addOnCompleteListener { task ->
+        if (task.isSuccessful) {
+            val document = task.result.documents.firstOrNull()
+            if (document != null) {
+                val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                val convertBirth = format.parse(birth)
+                document.reference.update(
+                    "email", email,
+                    "username", username,
+                    "phone", phone,
+                    "birth", convertBirth,
+                    "address", address
+                ).addOnCompleteListener { update ->
+                    if (update.isSuccessful) {
+                        Log.i(
+                            "UpdateInfo",
+                            "Se han actualizado los datos del usuario correctamente"
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+fun deleteAccount(
+    auth: FirebaseAuth,
+    db: FirebaseFirestore,
+    onSuccess: () -> Unit,
+    onError: (String) -> Unit
+) {
+    val uid = auth.currentUser!!.uid
+    db.collection(Tables.users).whereEqualTo("uid", uid).get()
+        .addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val userObtained = task.result.documents
+                if (userObtained != null) {
+                    userObtained.map { user ->
+                        db.collection(Tables.users).document(user.id).delete()
+                            .addOnCompleteListener { delete ->
+                                if (delete.isSuccessful) {
+                                    auth.currentUser?.delete()
+                                        ?.addOnCompleteListener { task ->
+                                            if (task.isSuccessful) {
+                                                auth.signOut()
+                                                onSuccess()
+                                            } else {
+                                                onError(
+                                                    task.exception?.message
+                                                        ?: "Ha ocurrido un error al eliminar la cuenta"
+                                                )
+                                            }
+                                        }
+
+                                } else {
+                                    onError(
+                                        task.exception?.message
+                                            ?: "Ha ocurrido un error al eliminar la cuenta"
+                                    )
+                                }
+                            }
+                    }
+                }
+            } else {
+                onError(
+                    task.exception?.message
+                        ?: "Ha ocurrido un error al eliminar la cuenta"
+                )
+            }
+        }
 }

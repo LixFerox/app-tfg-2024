@@ -34,12 +34,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
+import com.lixferox.app_tfg_2024.data.datasource.createRequest
 import com.lixferox.app_tfg_2024.data.model.Tables
-import com.lixferox.app_tfg_2024.model.Request
 
 @Composable
 fun NavBar(
@@ -69,7 +68,9 @@ fun NavBar(
         ItemNavBar(title = "Tareas", icon = R.drawable.task, onClick = { navigateToTasks() }),
         ItemNavBar(title = "Análisis", icon = R.drawable.stats, onClick = { navigateToStats() })
     )
+
     var selectedItem by remember { mutableStateOf(optionsMenu[indexBar].title) }
+
     NavigationBar {
         optionsMenu.map { item ->
             NavigationBarItem(
@@ -89,13 +90,13 @@ fun NavBar(
         }
     }
     if (showCreateRequest) {
-        CreateRequest(onDismiss = { showCreateRequest = false }, auth, db)
+        FormRequest(onDismiss = { showCreateRequest = false }, auth, db)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CreateRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: FirebaseFirestore) {
+private fun FormRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: FirebaseFirestore) {
     val uid = auth.currentUser?.uid
     var isHelper by remember { mutableStateOf<Boolean?>(null) }
     var title by remember { mutableStateOf("") }
@@ -215,49 +216,4 @@ private fun CreateRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: Firebas
             }
         }
     )
-}
-
-private fun createRequest(
-    title: String,
-    description: String,
-    urgency: String,
-    isHelper: Boolean,
-    uid: String,
-    db: FirebaseFirestore,
-    onSuccess: () -> Unit
-) {
-
-    db.collection(Tables.users).whereEqualTo("uid", uid).get().addOnCompleteListener { task ->
-        val document = task.result.documents.firstOrNull()
-        if (document != null) {
-            val username = document.getString("username")
-            val address = document.getString("address")
-            val phone = document.getString("phone")
-
-            val docRef = db.collection(Tables.requests).document()
-
-            val currentRequest = Request(
-                id = docRef.id,
-                uidOlder = if (!isHelper) uid else "",
-                uidHelper = if (isHelper) uid else "",
-                title = title,
-                description = description,
-                urgency = if (!isHelper) urgency else "",
-                olderUsername = if (!isHelper) username else "",
-                helperUsername = if (isHelper) username else "",
-                olderAddress = if (!isHelper) address else "",
-                helperAddress = if (isHelper) address else "",
-                olderPhone = if (!isHelper) phone ?: "" else "",
-                helperPhone = if (isHelper) document.getString("phone") ?: "" else "",
-                acceptedByUid = "",
-                dateCreated = Timestamp.now(),
-                status = "Creada"
-            )
-            db.collection(Tables.requests).add(currentRequest).addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    onSuccess()
-                }
-            }
-        }
-    }
 }

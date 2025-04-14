@@ -33,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -52,10 +53,15 @@ import com.lixferox.app_tfg_2024.R
 import com.lixferox.app_tfg_2024.ui.components.Header
 import com.lixferox.app_tfg_2024.ui.components.NavBar
 import androidx.core.net.toUri
+import com.lixferox.app_tfg_2024.common.callPhone
+import com.lixferox.app_tfg_2024.data.datasource.FirestoreDataSource
 import com.lixferox.app_tfg_2024.data.datasource.obtainUserInfo
 import com.lixferox.app_tfg_2024.data.datasource.obtainUserStats
+import com.lixferox.app_tfg_2024.model.Activity
 import com.lixferox.app_tfg_2024.model.Stats
 import com.lixferox.app_tfg_2024.model.User
+import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -72,7 +78,8 @@ fun HomeScreen(
     navigateToTask: () -> Unit,
     navigateToStats: () -> Unit,
     auth: FirebaseAuth,
-    db: FirebaseFirestore
+    db: FirebaseFirestore,
+    viewModel: FirestoreDataSource
 ) {
     Scaffold(
         topBar = {
@@ -105,7 +112,7 @@ fun HomeScreen(
             Content(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(horizontal = 16.dp), auth, db
+                    .padding(horizontal = 16.dp), auth, db, viewModel
             )
         }
     }
@@ -114,9 +121,15 @@ fun HomeScreen(
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-private fun Content(modifier: Modifier = Modifier, auth: FirebaseAuth, db: FirebaseFirestore) {
+private fun Content(
+    modifier: Modifier = Modifier,
+    auth: FirebaseAuth,
+    db: FirebaseFirestore,
+    viewModel: FirestoreDataSource
+) {
     var currentStats by remember { mutableStateOf<Stats?>(null) }
     var currentUser by remember { mutableStateOf<User?>(null) }
+    var currentActivity by remember { mutableStateOf<List<Activity?>>(emptyList()) }
 
     LaunchedEffect(auth.currentUser) {
         obtainUserStats(auth, db) { obtainedStats ->
@@ -125,6 +138,10 @@ private fun Content(modifier: Modifier = Modifier, auth: FirebaseAuth, db: Fireb
         obtainUserInfo(auth, db) { obtainedUser ->
             currentUser = obtainedUser
         }
+        viewModel.obtainActivity(auth, db) { obtainedActivity ->
+            currentActivity = obtainedActivity
+        }
+
     }
     if (currentUser == null) {
         Box(
@@ -137,8 +154,8 @@ private fun Content(modifier: Modifier = Modifier, auth: FirebaseAuth, db: Fireb
     }
 
     val username by remember { mutableStateOf(currentUser!!.username) }
-    val totalCompletedTasks by remember { mutableStateOf(currentStats!!.totalCompletedTasks) }
-    val tasksInProgress by remember { mutableStateOf(currentStats!!.tasksInProgress) }
+    val weekCompletedTasks by remember { mutableStateOf(currentStats!!.weekCompletedTasks) }
+    val tasksInProgress by remember { mutableIntStateOf(currentStats!!.tasksInProgress) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -147,9 +164,9 @@ private fun Content(modifier: Modifier = Modifier, auth: FirebaseAuth, db: Fireb
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            WelcomeSection(auth, db, username)
-            CardsSection(totalCompletedTasks, tasksInProgress)
-            RecientlyActivitySection()
+            WelcomeSection(username)
+            CardsSection(weekCompletedTasks, tasksInProgress)
+            RecientlyActivitySection(currentActivity)
         }
         EmergencyButton(modifier = Modifier.align(Alignment.BottomCenter))
     }
@@ -157,7 +174,7 @@ private fun Content(modifier: Modifier = Modifier, auth: FirebaseAuth, db: Fireb
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-private fun WelcomeSection(auth: FirebaseAuth, db: FirebaseFirestore, username: String) {
+private fun WelcomeSection(username: String) {
     val currentDateTime = LocalDateTime.now()
     val locale = Locale("es", "ES")
     val dateFormatter = DateTimeFormatter.ofPattern("EEEE, dd 'de' MMMM", locale)
@@ -208,8 +225,21 @@ private fun WelcomeSection(auth: FirebaseAuth, db: FirebaseFirestore, username: 
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-private fun CardsSection(totalCompletedTasks: Int, tasksInProgress: Int) {
+private fun CardsSection(totalCompletedTasks: List<Double>, tasksInProgress: Int) {
+    val date = LocalDate.now()
+    val dateOfWeek = when (date.dayOfWeek) {
+        DayOfWeek.MONDAY -> 0
+        DayOfWeek.TUESDAY -> 1
+        DayOfWeek.WEDNESDAY -> 2
+        DayOfWeek.THURSDAY -> 3
+        DayOfWeek.FRIDAY -> 4
+        DayOfWeek.SATURDAY -> 5
+        DayOfWeek.SUNDAY -> 6
+    }
+    val compteteDayOfWeek = totalCompletedTasks[dateOfWeek].toInt()
+
     data class ItemCard(
         val title: String,
         val description: String,
@@ -220,7 +250,7 @@ private fun CardsSection(totalCompletedTasks: Int, tasksInProgress: Int) {
     val listItems = listOf(
         ItemCard(
             title = "Tareas completadas",
-            description = "$totalCompletedTasks/20",
+            description = "$compteteDayOfWeek/20",
             icon = R.drawable.completed,
             color = Color(
                 0xFF8BC34A
@@ -279,61 +309,90 @@ private fun CardsSection(totalCompletedTasks: Int, tasksInProgress: Int) {
 }
 
 @Composable
-private fun RecientlyActivitySection() {
+private fun RecientlyActivitySection(currentActivity: List<Activity?>) {
     data class ItemCard(
         val title: String,
         val date: String,
         val name: String
     )
 
-    val listItems = listOf(
-        ItemCard(title = "Completaste una tarea", date = "Hace 2 horas", name = "Ayuda a Pepe"),
-    )
 
-    Column(
-        modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Actividad reciente", style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-        )
+    val listItems = currentActivity.map {
+        ItemCard(title = "Completaste una tarea", date = "Hace 2 horas", name = "Ayuda a Pepe")
+    }
+
+
+    if (listItems.isEmpty()) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            listItems.map { item ->
-                Card(
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .drawBehind {
-                            drawLine(
-                                color = Color.LightGray,
-                                start = Offset.Zero,
-                                end = Offset(0f, this.size.height),
-                                strokeWidth = 5f,
-                                cap = StrokeCap.Round
-                            )
-                        },
-                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+            Text(
+                text = "Actividad reciente", style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    Text(
+                        text = "No hay actividad reciente",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+        }
+    } else {
+        Column(
+            modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Actividad reciente", style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                listItems.map { item ->
+                    Card(
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .drawBehind {
+                                drawLine(
+                                    color = Color.LightGray,
+                                    start = Offset.Zero,
+                                    end = Offset(0f, this.size.height),
+                                    strokeWidth = 5f,
+                                    cap = StrokeCap.Round
+                                )
+                            },
+                        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
                     ) {
-                        Text(
-                            text = item.title,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.DarkGray
-                        )
-                        Text(
-                            text = "${item.date} • ${item.name}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
-                        )
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = item.title,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.DarkGray
+                            )
+                            Text(
+                                text = "${item.date} • ${item.name}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Gray
+                            )
+                        }
                     }
                 }
             }
@@ -347,7 +406,7 @@ private fun EmergencyButton(modifier: Modifier = Modifier) {
 
     Row(modifier.padding(8.dp)) {
         Button(
-            onClick = { callPhone(context) },
+            onClick = { callPhone(context, "061") },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
@@ -361,9 +420,4 @@ private fun EmergencyButton(modifier: Modifier = Modifier) {
             )
         }
     }
-}
-
-private fun callPhone(context: Context) {
-    val intent = Intent(Intent.ACTION_DIAL, "tel:061".toUri())
-    context.startActivity(intent)
 }

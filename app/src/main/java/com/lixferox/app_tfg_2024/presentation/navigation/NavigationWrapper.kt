@@ -1,5 +1,7 @@
 package com.lixferox.app_tfg_2024.presentation.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
@@ -17,6 +19,7 @@ import com.lixferox.app_tfg_2024.presentation.screens.SignUpScreen
 import com.lixferox.app_tfg_2024.presentation.screens.StatsProfileScreen
 import com.lixferox.app_tfg_2024.presentation.screens.TasksListScreen
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NavigationWrapper(
     navHostController: NavHostController,
@@ -74,7 +77,7 @@ fun NavigationWrapper(
                 navigateToStats = {
                     navHostController.navigate(SStats)
                 },
-                auth, db
+                auth, db, viewModel
             )
         }
 

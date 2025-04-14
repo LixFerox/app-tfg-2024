@@ -50,6 +50,7 @@ import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
+import com.lixferox.app_tfg_2024.data.datasource.deleteAccount
 import com.lixferox.app_tfg_2024.data.datasource.obtainUserInfo
 import com.lixferox.app_tfg_2024.data.datasource.obtainUserStats
 import com.lixferox.app_tfg_2024.data.model.Tables
@@ -164,7 +165,9 @@ private fun ProfileData(
         StatsSection(puntuation, totalRequests)
         Spacer(Modifier.height(8.dp))
         InfoSection(joinedIn, listTasksWeek)
-        RequestButton(auth, db, onError = {}, onSuccess = { navigateToLogin() })
+        RequestButton(auth, db, onError = { mesage ->
+            errorMessage = mesage
+        }, onSuccess = { navigateToLogin() })
         if (errorMessage != null) {
             AlertDialog(onDismissRequest = { errorMessage = null }, confirmButton = {
                 TextButton(onClick = { errorMessage = null }) { Text(text = "Aceptar") }
@@ -475,46 +478,7 @@ private fun RequestButton(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        val uid = auth.currentUser!!.uid
-                        db.collection(Tables.users).whereEqualTo("uid", uid).get()
-                            .addOnCompleteListener { task ->
-                                if (task.isSuccessful) {
-                                    val userObtained = task.result.documents
-                                    if (userObtained != null) {
-                                        userObtained.map { user ->
-                                            db.collection(Tables.users).document(user.id).delete()
-                                                .addOnCompleteListener { delete ->
-                                                    if (delete.isSuccessful) {
-                                                        auth.currentUser?.delete()
-                                                            ?.addOnCompleteListener { task ->
-                                                                if (task.isSuccessful) {
-                                                                    auth.signOut()
-                                                                    onSuccess()
-                                                                } else {
-                                                                    onError(
-                                                                        task.exception?.message
-                                                                            ?: "Ha ocurrido un error al eliminar la cuenta"
-                                                                    )
-                                                                }
-                                                            }
-
-                                                    } else {
-                                                        onError(
-                                                            task.exception?.message
-                                                                ?: "Ha ocurrido un error al eliminar la cuenta"
-                                                        )
-                                                    }
-                                                }
-                                        }
-                                    }
-                                } else {
-                                    onError(
-                                        task.exception?.message
-                                            ?: "Ha ocurrido un error al eliminar la cuenta"
-                                    )
-                                }
-                            }
-
+                        deleteAccount(auth, db, onSuccess, onError)
                         showDeleteDialog = false
                     }
                 ) {

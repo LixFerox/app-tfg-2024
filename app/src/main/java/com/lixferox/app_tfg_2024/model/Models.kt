@@ -2,6 +2,8 @@ package com.lixferox.app_tfg_2024.model
 
 import com.google.firebase.Timestamp
 
+// FILAS DE CADA TABLA DE LA BASE DE DATOS
+
 data class User(
     val uid: String,
     val email: String,
@@ -39,4 +41,11 @@ data class Stats(
     val tasksInProgress: Int,
     val puntuation: Int,
     val joinedIn: Timestamp
+)
+
+data class Activity(
+    val uid: String,
+    val time: Timestamp,
+    val title: String,
+    val description: String
 )

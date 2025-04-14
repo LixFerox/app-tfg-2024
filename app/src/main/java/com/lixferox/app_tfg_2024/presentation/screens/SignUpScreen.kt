@@ -42,15 +42,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
-import com.lixferox.app_tfg_2024.data.model.Tables
-import com.lixferox.app_tfg_2024.model.Stats
-import com.lixferox.app_tfg_2024.model.User
-import java.text.SimpleDateFormat
-import java.util.Locale
+import com.lixferox.app_tfg_2024.data.datasource.createAccountFirebase
 
 @Composable
 fun SignUpScreen(
@@ -333,65 +328,3 @@ private fun SignUp(navigateToLogin: () -> Unit) {
     }
 }
 
-private fun createAccountFirebase(
-    onSuccess: () -> Unit,
-    onError: (String) -> Unit,
-    auth: FirebaseAuth,
-    db: FirebaseFirestore,
-    email: String,
-    password: String,
-    repassword: String,
-    username: String,
-    birth: String,
-    isHelper: Boolean,
-    address: String,
-    phone: String
-) {
-    if (password != repassword) {
-        onError("Las contraseñas no coinciden")
-        return
-    }
-    if (email.isEmpty() || password.isEmpty() || repassword.isEmpty() || birth.isEmpty()) {
-        onError("Debes rellenar todos los campos")
-        return
-    }
-
-    auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener { task ->
-        val uid = auth.currentUser?.uid.toString()
-        if (task.isSuccessful) {
-            val user = uid
-            val currentDate = Timestamp.now()
-            val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-            val convertBirth = format.parse(birth)
-            val currentUser = User(
-                uid = user,
-                email = email,
-                username = username,
-                birth = Timestamp(convertBirth),
-                isHelper = isHelper,
-                address = address,
-                phone = phone
-            )
-            db.collection(Tables.users).add(currentUser).addOnCompleteListener { added ->
-                if (added.isSuccessful) {
-                    val listTasksWeek = listOf(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-                    val statsUser = Stats(
-                        uid = uid,
-                        level = 0,
-                        points = 0,
-                        totalCompletedTasks = 0,
-                        weekCompletedTasks = listTasksWeek,
-                        tasksInProgress = 0,
-                        puntuation = 0,
-                        joinedIn = currentDate
-                    )
-                    db.collection(Tables.stats).add(statsUser).addOnCompleteListener { stats ->
-                        onSuccess()
-                    }
-                }
-            }
-        } else {
-            onError(task.exception?.message ?: "Error desconocido al crear la cuenta")
-        }
-    }
-}

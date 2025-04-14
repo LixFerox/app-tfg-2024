@@ -1,7 +1,5 @@
 package com.lixferox.app_tfg_2024.ui.components
 
-import android.content.Context
-import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,7 +36,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
 import com.lixferox.app_tfg_2024.data.datasource.obtainUserInfo
 import com.lixferox.app_tfg_2024.model.User
-import androidx.core.net.toUri
+import com.lixferox.app_tfg_2024.common.openWeb
 
 @Composable
 fun Header(
@@ -52,8 +50,8 @@ fun Header(
     val context = LocalContext.current
     var isExpandedSettings by remember { mutableStateOf(false) }
     var isExpandedProfile by remember { mutableStateOf(false) }
-
     var currentUser by remember { mutableStateOf<User?>(null) }
+
     LaunchedEffect(auth.currentUser) {
         obtainUserInfo(auth, db) { obtainedUser ->
             currentUser = obtainedUser
@@ -91,7 +89,7 @@ fun Header(
                 onDismiss = { isExpandedSettings = false },
                 onSettingsClick = { navigateToSettings() },
                 onProfileClick = { navigateToProfileInfo() },
-                onHelpClick = { redirectWeb(context) }
+                onHelpClick = { openWeb(context, "http://vitalist.lixferox.es") }
             )
         }
         Box {
@@ -192,10 +190,4 @@ private fun DropMenuProfile(
             )
         }
     }
-}
-
-private fun redirectWeb(context: Context) {
-    val intent = Intent(Intent.ACTION_VIEW)
-    intent.data = "http://vitalist.lixferox.es/".toUri()
-    context.startActivity(intent)
 }

@@ -1,6 +1,5 @@
 package com.lixferox.app_tfg_2024.presentation.screens
 
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,7 +43,7 @@ import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.data.datasource.obtainUserInfo
-import com.lixferox.app_tfg_2024.data.model.Tables
+import com.lixferox.app_tfg_2024.data.datasource.updateInfo
 import com.lixferox.app_tfg_2024.model.User
 import com.lixferox.app_tfg_2024.ui.components.Header
 import com.lixferox.app_tfg_2024.ui.components.NavBar
@@ -123,6 +122,7 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
         }
         return
     }
+
     val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     val birthCovert = format.format(currentUser!!.birth.toDate()).toString()
     var pickerIsVisible by remember { mutableStateOf(false) }
@@ -290,39 +290,4 @@ private fun ChangeSettings(onDismiss: () -> Unit, onAccept: () -> Unit) {
                 Text(text = "¿Estás seguro que quieres guardar los cambios?")
             }
         })
-}
-
-private fun updateInfo(
-    auth: FirebaseAuth,
-    db: FirebaseFirestore,
-    email: String,
-    username: String,
-    phone: String,
-    birth: String,
-    address: String
-) {
-    val uid = auth.currentUser?.uid
-    db.collection(Tables.users).whereEqualTo("uid", uid).get().addOnCompleteListener { task ->
-        if (task.isSuccessful) {
-            val document = task.result.documents.firstOrNull()
-            if (document != null) {
-                val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                val convertBirth = format.parse(birth)
-                document.reference.update(
-                    "email", email,
-                    "username", username,
-                    "phone", phone,
-                    "birth", convertBirth,
-                    "address", address
-                ).addOnCompleteListener { update ->
-                    if (update.isSuccessful) {
-                        Log.i(
-                            "UpdateInfo",
-                            "Se han actualizado los datos del usuario correctamente"
-                        )
-                    }
-                }
-            }
-        }
-    }
 }

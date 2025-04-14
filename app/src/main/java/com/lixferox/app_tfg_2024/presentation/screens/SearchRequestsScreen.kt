@@ -124,6 +124,7 @@ private fun Content(
     var expanded by remember { mutableStateOf(false) }
     val opciones = listOf("Quitar filtro", "Alta", "Media", "Baja")
     var filter by remember { mutableStateOf("") }
+    var listRequest by remember { mutableStateOf<List<Request>>(emptyList()) }
 
     LaunchedEffect(uid) {
         uid.let {
@@ -132,6 +133,9 @@ private fun Content(
                     val currentUser = task.result.documents.firstOrNull()
                     if (currentUser != null) {
                         isHelper = currentUser.getBoolean("helper") ?: false
+                        viewModel.obtainAllRequest(db, isHelper!!) { request ->
+                            listRequest = request
+                        }
                     }
                 }
         }
@@ -217,7 +221,7 @@ private fun Content(
                 }
             }
         }
-        ListRequest(filter, auth, db, viewModel)
+        ListRequest(filter, auth, db, viewModel, isHelper!!, listRequest)
     }
 }
 
@@ -226,14 +230,12 @@ private fun ListRequest(
     filter: String,
     auth: FirebaseAuth,
     db: FirebaseFirestore,
-    viewModel: FirestoreDataSource
+    viewModel: FirestoreDataSource,
+    isHelper: Boolean,
+    listRequest: List<Request>
 ) {
     var showModal by remember { mutableStateOf(false) }
-    var isHelper by remember { mutableStateOf<Boolean?>(null) }
-    var listRequest by remember { mutableStateOf<List<Request>>(emptyList()) }
     var indexTask by remember { mutableStateOf<String?>(null) }
-
-    val uid = auth.currentUser?.uid
 
     data class ItemMenu(
         val id: String,
@@ -243,31 +245,6 @@ private fun ListRequest(
         val username: String,
         val date: String
     )
-
-    LaunchedEffect(uid) {
-        uid.let {
-            db.collection(Tables.users).whereEqualTo("uid", uid).get()
-                .addOnCompleteListener { task ->
-                    val currentUser = task.result.documents.firstOrNull()
-                    if (currentUser != null) {
-                        isHelper = currentUser.getBoolean("helper") ?: false
-                        viewModel.obtainAllRequest(db, isHelper!!) { requests ->
-                            listRequest = requests
-                        }
-                    }
-                }
-        }
-    }
-
-    if (isHelper == null) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            CircularProgressIndicator()
-        }
-        return
-    }
 
     val listItems = listRequest.map { task ->
         val dateObject = task.dateCreated.toDate()
@@ -280,11 +257,12 @@ private fun ListRequest(
             title = task.title,
             description = task.description,
             urgency = if (task.urgency.isNullOrEmpty()) "Desconocido" else task.urgency,
-            username = if (isHelper == true) task.olderUsername
+            username = if (isHelper) task.olderUsername
                 ?: "Usuario desconocido" else task.helperUsername ?: "Usuario desconocido",
             date = dateTask,
         )
     }
+
     val filteredItems = if (filter.isBlank()) {
         listItems
     } else {
