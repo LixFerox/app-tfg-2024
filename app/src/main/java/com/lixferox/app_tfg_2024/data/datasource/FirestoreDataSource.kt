@@ -295,8 +295,8 @@ fun createRequest(
                 dateCreated = Timestamp.now(),
                 status = "Creada"
             )
-            db.collection(Tables.requests).add(currentRequest).addOnCompleteListener { task ->
-                if (task.isSuccessful) {
+            db.collection(Tables.requests).add(currentRequest).addOnCompleteListener { activity ->
+                if (activity.isSuccessful) {
                     onSuccess()
                     val currentActivity = Activity(
                         uid = uid,

@@ -64,6 +64,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
+import kotlin.math.abs
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -368,7 +369,7 @@ private fun RecientlyActivitySection(currentActivity: List<Activity?>) {
 
                     val timeInMillis = item.date.toDate().time
                     val now = System.currentTimeMillis()
-                    val diff = now - timeInMillis
+                    val diff =  abs(timeInMillis - now)
 
                     val seconds = diff / 1000
                     val minutes = seconds / 60
