@@ -1,7 +1,5 @@
 package com.lixferox.app_tfg_2024.presentation.screens
 
-import android.content.Context
-import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
@@ -47,12 +45,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
 import com.lixferox.app_tfg_2024.ui.components.Header
 import com.lixferox.app_tfg_2024.ui.components.NavBar
-import androidx.core.net.toUri
 import com.lixferox.app_tfg_2024.common.callPhone
 import com.lixferox.app_tfg_2024.data.datasource.FirestoreDataSource
 import com.lixferox.app_tfg_2024.data.datasource.obtainUserInfo
@@ -64,6 +62,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Date
 import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -312,13 +311,17 @@ private fun CardsSection(totalCompletedTasks: List<Double>, tasksInProgress: Int
 private fun RecientlyActivitySection(currentActivity: List<Activity?>) {
     data class ItemCard(
         val title: String,
-        val date: String,
-        val name: String
+        val date: Timestamp,
+        val description: String
     )
 
 
-    val listItems = currentActivity.map {
-        ItemCard(title = "Completaste una tarea", date = "Hace 2 horas", name = "Ayuda a Pepe")
+    val listItems = currentActivity.map { task ->
+        val title = task!!.title
+        val date = task.time
+        val description = task.description
+
+        ItemCard(title = title, date = date, description = description)
     }
 
 
@@ -362,6 +365,23 @@ private fun RecientlyActivitySection(currentActivity: List<Activity?>) {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 listItems.map { item ->
+
+                    val timeInMillis = item.date.toDate().time
+                    val now = System.currentTimeMillis()
+                    val diff = now - timeInMillis
+
+                    val seconds = diff / 1000
+                    val minutes = seconds / 60
+                    val hours = minutes / 60
+                    val days = hours / 24
+
+                    val timeTask = when {
+                        seconds < 60 -> "Hace $seconds segundo ${if (seconds == 1L) "" else "s"}"
+                        minutes < 60 -> "Hace $minutes minuto ${if (minutes == 1L) "" else "s"}"
+                        hours < 24 -> "Hace $hours hora ${if (hours == 1L) "" else "s"}"
+                        else -> "Hace $days día ${if (days == 1L) "" else "s"}"
+                    }
+
                     Card(
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier
@@ -388,7 +408,7 @@ private fun RecientlyActivitySection(currentActivity: List<Activity?>) {
                                 color = Color.DarkGray
                             )
                             Text(
-                                text = "${item.date} • ${item.name}",
+                                text = "$timeTask  • ${item.description}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.Gray
                             )

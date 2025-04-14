@@ -4,13 +4,14 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.lixferox.app_tfg_2024.data.model.Tables
 import com.lixferox.app_tfg_2024.model.Activity
 import com.lixferox.app_tfg_2024.model.Request
 import com.lixferox.app_tfg_2024.model.Stats
 import com.lixferox.app_tfg_2024.model.User
-import java.sql.Time
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -83,7 +84,18 @@ class FirestoreDataSource : ViewModel() {
                         .addOnSuccessListener { request ->
                             if (!request.isEmpty) {
                                 val requestFind = request.documents.first()
-                                requestFind.reference.update(updateFields)
+                                requestFind.reference.update(updateFields).addOnSuccessListener {
+                                    val description = requestFind.getString("description")
+
+                                    val currentActivity = Activity(
+                                        uid = uid!!,
+                                        time = Timestamp.now(),
+                                        title = "Aceptaste una tarea",
+                                        description = description!!
+                                    )
+                                    createActivity(db, currentActivity)
+                                    updateStats(auth, db, "tasksInProgress", 1)
+                                }
                             }
                         }
                 }
@@ -151,6 +163,24 @@ class FirestoreDataSource : ViewModel() {
                             if (!request.isEmpty) {
                                 val requestFind = request.documents.first()
                                 requestFind.reference.update(updateFields)
+                                if (action == "cancel") {
+                                    val currentActivity = Activity(
+                                        uid = uid!!,
+                                        time = Timestamp.now(),
+                                        title = "Cancelaste una tarea",
+                                        description = requestFind.getString("description") ?: ""
+                                    )
+                                    createActivity(db, currentActivity)
+                                } else {
+                                    val currentActivity = Activity(
+                                        uid = uid!!,
+                                        time = Timestamp.now(),
+                                        title = "Completaste una tarea",
+                                        description = requestFind.getString("description") ?: ""
+                                    )
+                                    createActivity(db, currentActivity)
+                                }
+                                updateStats(auth, db, "tasksInProgress", -1)
                             }
                         }
                 }
@@ -163,7 +193,8 @@ class FirestoreDataSource : ViewModel() {
         onResult: (List<Activity>) -> Unit
     ) {
         val uid = auth.currentUser?.uid
-        db.collection(Tables.activity).whereEqualTo("uid", uid).get()
+        db.collection(Tables.activity).whereEqualTo("uid", uid)
+            .orderBy("time", Query.Direction.DESCENDING).limit(3).get()
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val activityList = task.result.documents.map { activity ->
@@ -267,6 +298,13 @@ fun createRequest(
             db.collection(Tables.requests).add(currentRequest).addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     onSuccess()
+                    val currentActivity = Activity(
+                        uid = uid,
+                        time = Timestamp.now(),
+                        title = "Creaste una tarea",
+                        description = description
+                    )
+                    createActivity(db, currentActivity)
                 }
             }
         }
@@ -301,6 +339,25 @@ fun updateInfo(
                             "UpdateInfo",
                             "Se han actualizado los datos del usuario correctamente"
                         )
+                    }
+                }
+            }
+        }
+    }
+}
+
+fun updateStats(auth: FirebaseAuth, db: FirebaseFirestore, field: String, value: Int) {
+    val uid = auth.currentUser!!.uid
+
+    db.collection(Tables.stats).whereEqualTo("uid", uid).get().addOnCompleteListener { task ->
+        if (task.isSuccessful) {
+            val document = task.result.documents.firstOrNull()
+            if (document != null) {
+                document.reference.update(
+                    field, FieldValue.increment(value.toLong())
+                ).addOnCompleteListener { update ->
+                    if (update.isSuccessful) {
+                        Log.i("updateStats", "Se han actualizado las estadisticas")
                     }
                 }
             }
@@ -353,4 +410,12 @@ fun deleteAccount(
                 )
             }
         }
+}
+
+private fun createActivity(db: FirebaseFirestore, currentActivity: Activity) {
+    db.collection(Tables.activity).add(currentActivity).addOnCompleteListener { activity ->
+        if (activity.isSuccessful) {
+            Log.i("activityAdded", "Se ha registrado la actividad")
+        }
+    }
 }

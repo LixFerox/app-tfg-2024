@@ -133,8 +133,8 @@ private fun Content(
                     val currentUser = task.result.documents.firstOrNull()
                     if (currentUser != null) {
                         isHelper = currentUser.getBoolean("helper") ?: false
-                        viewModel.obtainAllRequest(db, isHelper!!) { request ->
-                            listRequest = request
+                        viewModel.obtainAllRequest(db, isHelper!!) { requests ->
+                            listRequest = requests
                         }
                     }
                 }
@@ -221,7 +221,7 @@ private fun Content(
                 }
             }
         }
-        ListRequest(filter, auth, db, viewModel, isHelper!!, listRequest)
+        ListRequest(filter, auth, db, viewModel, listRequest, isHelper!!)
     }
 }
 
@@ -231,11 +231,12 @@ private fun ListRequest(
     auth: FirebaseAuth,
     db: FirebaseFirestore,
     viewModel: FirestoreDataSource,
-    isHelper: Boolean,
-    listRequest: List<Request>
+    listRequest: List<Request>,
+    isHelper: Boolean
 ) {
     var showModal by remember { mutableStateOf(false) }
     var indexTask by remember { mutableStateOf<String?>(null) }
+
 
     data class ItemMenu(
         val id: String,
@@ -257,18 +258,16 @@ private fun ListRequest(
             title = task.title,
             description = task.description,
             urgency = if (task.urgency.isNullOrEmpty()) "Desconocido" else task.urgency,
-            username = if (isHelper) task.olderUsername
+            username = if (isHelper == true) task.olderUsername
                 ?: "Usuario desconocido" else task.helperUsername ?: "Usuario desconocido",
             date = dateTask,
         )
     }
-
     val filteredItems = if (filter.isBlank()) {
         listItems
     } else {
         listItems.filter { it.urgency.equals(filter, ignoreCase = true) }
     }
-
 
     if (filteredItems.isEmpty()) {
         Box(

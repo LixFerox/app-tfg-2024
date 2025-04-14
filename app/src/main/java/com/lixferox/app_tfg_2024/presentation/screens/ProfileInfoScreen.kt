@@ -53,7 +53,6 @@ import com.lixferox.app_tfg_2024.R
 import com.lixferox.app_tfg_2024.data.datasource.deleteAccount
 import com.lixferox.app_tfg_2024.data.datasource.obtainUserInfo
 import com.lixferox.app_tfg_2024.data.datasource.obtainUserStats
-import com.lixferox.app_tfg_2024.data.model.Tables
 import com.lixferox.app_tfg_2024.model.Stats
 import com.lixferox.app_tfg_2024.model.User
 import com.lixferox.app_tfg_2024.ui.components.Header
