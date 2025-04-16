@@ -1,5 +1,7 @@
 package com.lixferox.app_tfg_2024.data.datasource
 
+import android.content.Context
+import android.widget.Toast
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -45,7 +47,8 @@ fun createAccountFirebase(
     birth: String,
     isHelper: Boolean,
     address: String,
-    phone: String
+    phone: String,
+    context: Context,
 ) {
     if (password != repassword) {
         onError("Las contraseñas no coinciden")
@@ -84,10 +87,11 @@ fun createAccountFirebase(
                         puntuation = 0,
                         joinedIn = currentDate
                     )
-                    db.collection(Tables.stats).add(statsUser).addOnCompleteListener { stats ->
+                    db.collection(Tables.stats).add(statsUser).addOnCompleteListener {
                         onSuccess()
                     }
                 }
+                Toast.makeText(context, "¡Se ha creado la cuenta correctamente!", Toast.LENGTH_SHORT).show()
             }
         } else {
             onError(task.exception?.message ?: "Error desconocido al crear la cuenta")

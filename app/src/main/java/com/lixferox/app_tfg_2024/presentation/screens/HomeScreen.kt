@@ -377,10 +377,10 @@ private fun RecientlyActivitySection(currentActivity: List<Activity?>) {
                     val days = hours / 24
 
                     val timeTask = when {
-                        seconds < 60 -> "Hace $seconds segundo ${if (seconds == 1L) "" else "s"}"
-                        minutes < 60 -> "Hace $minutes minuto ${if (minutes == 1L) "" else "s"}"
-                        hours < 24 -> "Hace $hours hora ${if (hours == 1L) "" else "s"}"
-                        else -> "Hace $days día ${if (days == 1L) "" else "s"}"
+                        seconds < 60 -> "Hace $seconds segundo${if (seconds == 1L) "" else "s"}"
+                        minutes < 60 -> "Hace $minutes minuto${if (minutes == 1L) "" else "s"}"
+                        hours < 24 -> "Hace $hours hora${if (hours == 1L) "" else "s"}"
+                        else -> "Hace $days día${if (days == 1L) "" else "s"}"
                     }
 
                     Card(

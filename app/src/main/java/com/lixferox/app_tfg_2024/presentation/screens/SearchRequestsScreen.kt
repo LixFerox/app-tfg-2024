@@ -235,6 +235,7 @@ private fun ListRequest(
     isHelper: Boolean
 ) {
     var showModal by remember { mutableStateOf(false) }
+    var showLimit by remember { mutableStateOf(false) }
     var indexTask by remember { mutableStateOf<String?>(null) }
 
 
@@ -258,7 +259,7 @@ private fun ListRequest(
             title = task.title,
             description = task.description,
             urgency = if (task.urgency.isNullOrEmpty()) "Desconocido" else task.urgency,
-            username = if (isHelper == true) task.olderUsername
+            username = if (isHelper) task.olderUsername
                 ?: "Usuario desconocido" else task.helperUsername ?: "Usuario desconocido",
             date = dateTask,
         )
@@ -380,11 +381,23 @@ private fun ListRequest(
         AcceptRequest(
             onDismiss = { showModal = false },
             onAccept = {
-                viewModel.acceptRequest(indexTask!!, db, auth)
-                showModal = false
+                viewModel.limitRequest(auth, db) { limit ->
+                    if (limit == 3) {
+                        showLimit = true
+                    } else {
+                        viewModel.acceptRequest(indexTask!!, db, auth)
+                        showModal = false
+                    }
+                }
             },
             indexTask
         )
+    }
+    if (showLimit) {
+        LimitRequest(onDismiss = {
+            showLimit = false
+            showModal = false
+        })
     }
 }
 
@@ -409,4 +422,24 @@ private fun AcceptRequest(onDismiss: () -> Unit, onAccept: () -> Unit, index: St
                 }
             })
     }
+}
+
+@Composable
+private fun LimitRequest(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        confirmButton = { TextButton(onClick = { onDismiss() }) { Text(text = "Aceptar") } },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Limite solicitudes",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(text = "No puedes aceptar más solicitudes, primero completa alguna de las que ya tienes para poder aceptar una nueva")
+            }
+        })
 }

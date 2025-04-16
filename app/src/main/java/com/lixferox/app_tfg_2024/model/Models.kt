@@ -28,6 +28,7 @@ data class Request(
     val olderPhone: String,
     val helperPhone: String,
     val acceptedByUid: String?,
+    val createdByUid: String,
     val dateCreated: Timestamp,
     val status: String
 )

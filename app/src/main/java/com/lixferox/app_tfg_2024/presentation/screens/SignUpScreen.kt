@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -92,6 +93,7 @@ private fun Logo() {
 
 @Composable
 private fun Form(navigateToLogin: () -> Unit, auth: FirebaseAuth, db: FirebaseFirestore) {
+    val context= LocalContext.current
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var email by rememberSaveable { mutableStateOf("") }
     var username by rememberSaveable { mutableStateOf("") }
@@ -262,7 +264,8 @@ private fun Form(navigateToLogin: () -> Unit, auth: FirebaseAuth, db: FirebaseFi
                         birth,
                         isAssistant,
                         address,
-                        phone
+                        phone,
+                        context
                     )
                 },
                 modifier = Modifier

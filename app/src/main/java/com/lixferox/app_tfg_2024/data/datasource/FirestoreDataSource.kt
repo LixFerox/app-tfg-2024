@@ -22,31 +22,35 @@ class FirestoreDataSource : ViewModel() {
         onResult: (List<Request>) -> Unit
     ) {
         val collection = db.collection(Tables.requests)
-        val query = if (isHelper) collection.whereEqualTo(
-            "uidHelper",
-            ""
-        ) else collection.whereEqualTo("uidOlder", "")
-        query.get().addOnCompleteListener { task ->
-            val requestList = task.result.documents.map { document ->
-                Request(
-                    id = document.getString("id") ?: "",
-                    uidOlder = document.getString("uidOlder") ?: "",
-                    uidHelper = document.getString("uidHelper") ?: "",
-                    title = document.getString("title") ?: "",
-                    description = document.getString("description") ?: "",
-                    urgency = document.getString("urgency"),
-                    olderUsername = document.getString("olderUsername") ?: "",
-                    helperUsername = document.getString("helperUsername") ?: "",
-                    olderAddress = document.getString("olderAddress") ?: "",
-                    helperAddress = document.getString("helperAddress") ?: "",
-                    olderPhone = document.getString("olderPhone") ?: "",
-                    helperPhone = document.getString("helperPhone") ?: "",
-                    acceptedByUid = document.getString("acceptedByUid") ?: "",
-                    dateCreated = document.getTimestamp("dateCreated") ?: Timestamp.now(),
-                    status = document.getString("status") ?: ""
-                )
+        val query = if (isHelper) {
+            collection.whereEqualTo("uidHelper", "")
+        } else {
+            collection.whereEqualTo("uidOlder", "")
+        }
+        query.addSnapshotListener { snapshot, _ ->
+            if (snapshot != null) {
+                val requestList = snapshot.documents.map { document ->
+                    Request(
+                        id = document.getString("id") ?: "",
+                        uidOlder = document.getString("uidOlder") ?: "",
+                        uidHelper = document.getString("uidHelper") ?: "",
+                        title = document.getString("title") ?: "",
+                        description = document.getString("description") ?: "",
+                        urgency = document.getString("urgency"),
+                        olderUsername = document.getString("olderUsername") ?: "",
+                        helperUsername = document.getString("helperUsername") ?: "",
+                        olderAddress = document.getString("olderAddress") ?: "",
+                        helperAddress = document.getString("helperAddress") ?: "",
+                        olderPhone = document.getString("olderPhone") ?: "",
+                        helperPhone = document.getString("helperPhone") ?: "",
+                        acceptedByUid = document.getString("acceptedByUid") ?: "",
+                        createdByUid = document.getString("createdByUid") ?: "",
+                        dateCreated = document.getTimestamp("dateCreated") ?: Timestamp.now(),
+                        status = document.getString("status") ?: "",
+                    )
+                }
+                onResult(requestList)
             }
-            onResult(requestList)
         }
     }
 
@@ -109,28 +113,30 @@ class FirestoreDataSource : ViewModel() {
     ) {
         val uid = auth.currentUser?.uid
         db.collection(Tables.requests).whereEqualTo("acceptedByUid", uid)
-            .whereEqualTo("status", "Aceptada").get()
-            .addOnCompleteListener { task ->
-                val requestList = task.result.documents.map { document ->
-                    Request(
-                        id = document.getString("id") ?: "",
-                        uidOlder = document.getString("uidOlder") ?: "",
-                        uidHelper = document.getString("uidHelper") ?: "",
-                        title = document.getString("title") ?: "",
-                        description = document.getString("description") ?: "",
-                        urgency = document.getString("urgency"),
-                        olderUsername = document.getString("olderUsername") ?: "",
-                        helperUsername = document.getString("helperUsername") ?: "",
-                        olderAddress = document.getString("olderAddress") ?: "",
-                        helperAddress = document.getString("helperAddress") ?: "",
-                        olderPhone = document.getString("olderPhone") ?: "",
-                        helperPhone = document.getString("helperPhone") ?: "",
-                        acceptedByUid = document.getString("acceptedByUid") ?: "",
-                        dateCreated = document.getTimestamp("dateCreated") ?: Timestamp.now(),
-                        status = document.getString("status") ?: ""
-                    )
+            .whereEqualTo("status", "Aceptada").addSnapshotListener { snapshot, _ ->
+                if (snapshot != null) {
+                    val requestList = snapshot.documents.map { document ->
+                        Request(
+                            id = document.getString("id") ?: "",
+                            uidOlder = document.getString("uidOlder") ?: "",
+                            uidHelper = document.getString("uidHelper") ?: "",
+                            title = document.getString("title") ?: "",
+                            description = document.getString("description") ?: "",
+                            urgency = document.getString("urgency"),
+                            olderUsername = document.getString("olderUsername") ?: "",
+                            helperUsername = document.getString("helperUsername") ?: "",
+                            olderAddress = document.getString("olderAddress") ?: "",
+                            helperAddress = document.getString("helperAddress") ?: "",
+                            olderPhone = document.getString("olderPhone") ?: "",
+                            helperPhone = document.getString("helperPhone") ?: "",
+                            acceptedByUid = document.getString("acceptedByUid") ?: "",
+                            createdByUid = document.getString("createdByUid") ?: "",
+                            dateCreated = document.getTimestamp("dateCreated") ?: Timestamp.now(),
+                            status = document.getString("status") ?: "",
+                        )
+                    }
+                    onResult(requestList)
                 }
-                onResult(requestList)
             }
     }
 
@@ -211,6 +217,13 @@ class FirestoreDataSource : ViewModel() {
             }
     }
 
+    fun limitRequest(auth: FirebaseAuth, db: FirebaseFirestore, onResult: (Int) -> Unit) {
+        val uid = auth.currentUser?.uid
+        db.collection(Tables.requests).whereEqualTo("acceptedByUid", uid).get()
+            .addOnSuccessListener { task ->
+                onResult(task.size())
+            }
+    }
 }
 
 fun obtainUserStats(
@@ -292,6 +305,7 @@ fun createRequest(
                 olderPhone = if (!isHelper) phone ?: "" else "",
                 helperPhone = if (isHelper) document.getString("phone") ?: "" else "",
                 acceptedByUid = "",
+                createdByUid = uid,
                 dateCreated = Timestamp.now(),
                 status = "Creada"
             )
