@@ -151,6 +151,7 @@ class FirestoreDataSource : ViewModel() {
     fun actionAcceptedRequest(
         index: String,
         action: String,
+        isHelper: Boolean,
         db: FirebaseFirestore,
         auth: FirebaseAuth
     ) {
@@ -158,20 +159,26 @@ class FirestoreDataSource : ViewModel() {
         db.collection(Tables.users).whereEqualTo("uid", uid).get()
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    val updateFields = if (action == "cancel") {
-                        mapOf(
-                            "acceptedByUid" to "",
-                            "status" to "Creada",
-                            "helperUsername" to "",
-                            "uidHelper" to "",
-                            "helperPhone" to "",
-                            "helperAddress" to ""
-                        )
-                    } else {
-                        mapOf(
-                            "status" to "Completada",
-                        )
+                    val updateFields = mutableMapOf<String, Any>().apply {
+                        if (action == "cancel") {
+                            this["acceptedByUid"] = ""
+                        } else {
+                            this["status"] = "Completada"
+                        }
+
+                        if (isHelper) {
+                            this["helperAddress"] = ""
+                            this["helperPhone"] = ""
+                            this["helperUsername"] = ""
+                            this["uidHelper"] = ""
+                        } else {
+                            this["olderAddress"] = ""
+                            this["olderPhone"] = ""
+                            this["olderUsername"] = ""
+                            this["uidOlder"] = ""
+                        }
                     }
+
                     db.collection(Tables.requests).whereEqualTo("id", index).get()
                         .addOnSuccessListener { request ->
                             if (!request.isEmpty) {

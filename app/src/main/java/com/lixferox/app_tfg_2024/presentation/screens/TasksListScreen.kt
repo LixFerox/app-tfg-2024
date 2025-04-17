@@ -152,7 +152,8 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
         val username: String,
         val address: String,
         val date: String,
-        val phone: String
+        val phone: String,
+        val isHelper: Boolean
     )
 
     LaunchedEffect(uid) {
@@ -194,7 +195,8 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
             address = if (isHelper == true) task.olderAddress
                 ?: "Usuario desconocido" else task.helperAddress ?: "Desconocida",
             date = dateTask,
-            phone = if (isHelper == true) task.olderPhone else task.helperPhone
+            phone = if (isHelper == true) task.olderPhone else task.helperPhone,
+            isHelper = isHelper!!
         )
     }
 
@@ -304,7 +306,6 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
                         ) {
                             Button(
                                 onClick = {
-
                                     showModal = true
                                     textModal = "Completar"
                                     onAcceptAction = {
@@ -312,6 +313,7 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
                                         viewModel.actionAcceptedRequest(
                                             indexTask!!,
                                             "complete",
+                                            item.isHelper,
                                             db,
                                             auth
                                         )
@@ -340,6 +342,7 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
                                         viewModel.actionAcceptedRequest(
                                             indexTask!!,
                                             "cancel",
+                                            item.isHelper,
                                             db,
                                             auth
                                         )
