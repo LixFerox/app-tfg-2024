@@ -131,7 +131,7 @@ private fun FormRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: FirebaseF
         onDismissRequest = { onDismiss() },
         confirmButton = {
             TextButton(onClick = {
-                createRequest(title, description, urgency, isHelper!!, uid!!, db, onDismiss)
+                createRequest(title, description, urgency, isHelper!!, uid!!, db, auth, onDismiss)
                 onDismiss()
             }) { Text(text = "Crear") }
         },

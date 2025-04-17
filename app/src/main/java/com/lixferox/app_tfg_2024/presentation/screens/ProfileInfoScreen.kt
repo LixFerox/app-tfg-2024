@@ -228,10 +228,10 @@ private fun UserHeader(username: String, level: Int) {
 
 @Composable
 private fun LevelBar(levelBar: Int) {
-    val level by remember { mutableFloatStateOf(levelBar.toFloat()) }
+    val points by remember { mutableFloatStateOf(levelBar.toFloat()) }
 
     LinearProgressIndicator(
-        progress = { level / 100f },
+        progress = { points / 500f },
         modifier = Modifier
             .fillMaxWidth(0.5f)
             .height(8.dp),

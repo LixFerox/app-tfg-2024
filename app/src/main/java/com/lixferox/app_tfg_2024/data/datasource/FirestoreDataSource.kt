@@ -1,7 +1,11 @@
 package com.lixferox.app_tfg_2024.data.datasource
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
+import com.google.android.gms.tasks.Task
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
@@ -13,6 +17,8 @@ import com.lixferox.app_tfg_2024.model.Request
 import com.lixferox.app_tfg_2024.model.Stats
 import com.lixferox.app_tfg_2024.model.User
 import java.text.SimpleDateFormat
+import java.time.DayOfWeek
+import java.time.LocalDate
 import java.util.Locale
 
 class FirestoreDataSource : ViewModel() {
@@ -98,7 +104,7 @@ class FirestoreDataSource : ViewModel() {
                                         description = description!!
                                     )
                                     createActivity(db, currentActivity)
-                                    updateStats(auth, db, "tasksInProgress", 1)
+                                    updateStats(db, auth, "acceptTask")
                                 }
                             }
                         }
@@ -177,6 +183,7 @@ class FirestoreDataSource : ViewModel() {
                                         description = requestFind.getString("description") ?: ""
                                     )
                                     createActivity(db, currentActivity)
+                                    updateStats(db, auth, "cancelTask")
                                 } else {
                                     val currentActivity = Activity(
                                         uid = uid!!,
@@ -185,8 +192,8 @@ class FirestoreDataSource : ViewModel() {
                                         description = requestFind.getString("description") ?: ""
                                     )
                                     createActivity(db, currentActivity)
+                                    updateStats(db, auth, "completeTask")
                                 }
-                                updateStats(auth, db, "tasksInProgress", -1)
                             }
                         }
                 }
@@ -200,20 +207,19 @@ class FirestoreDataSource : ViewModel() {
     ) {
         val uid = auth.currentUser?.uid
         db.collection(Tables.activity).whereEqualTo("uid", uid)
-            .orderBy("time", Query.Direction.DESCENDING).limit(3).get()
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val activityList = task.result.documents.map { activity ->
+            .orderBy("time", Query.Direction.DESCENDING).limit(3)
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot != null) {
+                    val activityList = snapshot.documents.map { document ->
                         Activity(
-                            uid = activity.getString("uid") ?: "",
-                            time = activity.getTimestamp("time") ?: Timestamp.now(),
-                            title = activity.getString("title") ?: "",
-                            description = activity.getString("description") ?: ""
+                            uid = document.getString("uid") ?: "",
+                            time = document.getTimestamp("time") ?: Timestamp.now(),
+                            title = document.getString("title") ?: "",
+                            description = document.getString("description") ?: ""
                         )
                     }
                     onResult(activityList)
                 }
-
             }
     }
 
@@ -282,6 +288,7 @@ fun createRequest(
     isHelper: Boolean,
     uid: String,
     db: FirebaseFirestore,
+    auth: FirebaseAuth,
     onSuccess: () -> Unit
 ) {
     db.collection(Tables.users).whereEqualTo("uid", uid).get().addOnCompleteListener { task ->
@@ -319,6 +326,7 @@ fun createRequest(
                         description = description
                     )
                     createActivity(db, currentActivity)
+                    updateStats(db, auth, "createTask")
                 }
             }
         }
@@ -360,76 +368,130 @@ fun updateInfo(
     }
 }
 
-fun updateStats(auth: FirebaseAuth, db: FirebaseFirestore, field: String, value: Int) {
-    val uid = auth.currentUser!!.uid
-
-    db.collection(Tables.stats).whereEqualTo("uid", uid).get().addOnCompleteListener { task ->
-        if (task.isSuccessful) {
-            val document = task.result.documents.firstOrNull()
-            if (document != null) {
-                document.reference.update(
-                    field, FieldValue.increment(value.toLong())
-                ).addOnCompleteListener { update ->
-                    if (update.isSuccessful) {
-                        Log.i("updateStats", "Se han actualizado las estadisticas")
-                    }
-                }
-            }
-        }
-    }
-}
-
 fun deleteAccount(
     auth: FirebaseAuth,
     db: FirebaseFirestore,
     onSuccess: () -> Unit,
     onError: (String) -> Unit
 ) {
-    val uid = auth.currentUser!!.uid
-    db.collection(Tables.users).whereEqualTo("uid", uid).get()
-        .addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val userObtained = task.result.documents
-                if (userObtained != null) {
-                    userObtained.map { user ->
-                        db.collection(Tables.users).document(user.id).delete()
-                            .addOnCompleteListener { delete ->
-                                if (delete.isSuccessful) {
-                                    auth.currentUser?.delete()
-                                        ?.addOnCompleteListener { task ->
-                                            if (task.isSuccessful) {
-                                                auth.signOut()
-                                                onSuccess()
-                                            } else {
-                                                onError(
-                                                    task.exception?.message
-                                                        ?: "Ha ocurrido un error al eliminar la cuenta"
-                                                )
-                                            }
-                                        }
+    data class Search(
+        val name: String,
+        val field: String
+    )
 
-                                } else {
-                                    onError(
-                                        task.exception?.message
-                                            ?: "Ha ocurrido un error al eliminar la cuenta"
-                                    )
-                                }
-                            }
+    val listTables = listOf(
+        Search(Tables.users, "uid"),
+        Search(Tables.stats, "uid"),
+        Search(Tables.requests, "createdByUid"),
+        Search(Tables.activity, "uid")
+    )
+
+    val uid = auth.currentUser!!.uid
+    val deleteTasks = mutableListOf<Task<Void>>()
+
+    listTables.map { table ->
+        db.collection(table.name).whereEqualTo(table.field, uid).get()
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val dataObtained = task.result.documents
+                    println("LOG $dataObtained")
+                    dataObtained.forEach { document ->
+                        val delete = db.collection(table.name).document(document.id).delete()
+                        deleteTasks.add(delete)
                     }
                 }
-            } else {
-                onError(
-                    task.exception?.message
-                        ?: "Ha ocurrido un error al eliminar la cuenta"
-                )
+            }
+    }
+    Tasks.whenAllComplete(deleteTasks).addOnCompleteListener { allDelete ->
+        if (allDelete.isSuccessful) {
+            auth.currentUser?.delete()?.addOnCompleteListener { delete ->
+                if (delete.isSuccessful) {
+                    auth.signOut()
+                    onSuccess()
+                } else {
+                    onError(
+                        delete.exception?.message
+                            ?: "Ha ocurrido un error al eliminar la cuenta en una tabla"
+                    )
+                }
             }
         }
+    }
 }
 
 private fun createActivity(db: FirebaseFirestore, currentActivity: Activity) {
     db.collection(Tables.activity).add(currentActivity).addOnCompleteListener { activity ->
         if (activity.isSuccessful) {
             Log.i("activityAdded", "Se ha registrado la actividad")
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+private fun updateStats(db: FirebaseFirestore, auth: FirebaseAuth, action: String) {
+    val uid = auth.currentUser?.uid
+    val date = LocalDate.now()
+    val dateOfWeek = when (date.dayOfWeek) {
+        DayOfWeek.MONDAY -> 0
+        DayOfWeek.TUESDAY -> 1
+        DayOfWeek.WEDNESDAY -> 2
+        DayOfWeek.THURSDAY -> 3
+        DayOfWeek.FRIDAY -> 4
+        DayOfWeek.SATURDAY -> 5
+        DayOfWeek.SUNDAY -> 6
+    }
+
+
+    val updateFields = when {
+        action == "createTask" -> mapOf("points" to FieldValue.increment(500))
+        action == "acceptTask" -> mapOf(
+            "tasksInProgress" to 1,
+            "points" to FieldValue.increment(100)
+        )
+
+        action == "completeTask" -> mapOf(
+            "totalCompletedTasks" to FieldValue.increment(1),
+            "points" to FieldValue.increment(200),
+            "weekCompletedTasks" to FieldValue.increment(1)
+        ).plus(
+            mapOf("weekCompletedTasks" to FieldValue.arrayUnion(dateOfWeek))
+        )
+
+        action == "cancelTask" -> mapOf(
+            "tasksInProgress" to FieldValue.increment(-1),
+            "points" to FieldValue.increment(-120)
+        )
+
+        else -> mapOf("status" to "No se ha escogido ninguna opcion")
+    }
+
+    db.collection(Tables.stats).whereEqualTo("uid", uid).get().addOnCompleteListener { task ->
+        if (task.isSuccessful) {
+            val document = task.result.documents.firstOrNull()
+            if (document != null) {
+                document.reference.update(updateFields).addOnCompleteListener { update ->
+                    if (update.isSuccessful) {
+                        Log.i("updateStats", "Se han actualizado las estadisticas")
+                        document.reference.get().addOnCompleteListener { dataUser ->
+                            if (dataUser.isSuccessful) {
+                                val points = dataUser.result.getLong("points") ?: 0L
+                                if (points >= 500) {
+                                    val fieldsLevel = mapOf(
+                                        "level" to FieldValue.increment(points / 500),
+                                        "points" to points % 500
+                                    )
+                                    document.reference.update(fieldsLevel)
+                                        .addOnCompleteListener { updateLevel ->
+                                            if (updateLevel.isSuccessful) {
+                                                Log.i("updateLevel", "Se han actualizado el nivel")
+                                            }
+                                        }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
