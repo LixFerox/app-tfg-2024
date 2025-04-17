@@ -41,7 +41,8 @@ data class Stats(
     val weekCompletedTasks: List<Double>,
     val tasksInProgress: Int,
     val puntuation: Int,
-    val joinedIn: Timestamp
+    val joinedIn: Timestamp,
+    val resetWeekValues : Boolean
 )
 
 data class Activity(

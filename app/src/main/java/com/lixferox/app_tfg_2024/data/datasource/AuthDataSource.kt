@@ -85,7 +85,8 @@ fun createAccountFirebase(
                         weekCompletedTasks = listTasksWeek,
                         tasksInProgress = 0,
                         puntuation = 0,
-                        joinedIn = currentDate
+                        joinedIn = currentDate,
+                        resetWeekValues = false
                     )
                     db.collection(Tables.stats).add(statsUser).addOnCompleteListener {
                         onSuccess()

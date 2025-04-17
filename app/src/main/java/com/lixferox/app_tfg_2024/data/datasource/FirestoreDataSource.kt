@@ -60,6 +60,7 @@ class FirestoreDataSource : ViewModel() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun acceptRequest(index: String, db: FirebaseFirestore, auth: FirebaseAuth) {
         val uid = auth.currentUser?.uid
         db.collection(Tables.users).whereEqualTo("uid", uid).get()
@@ -146,6 +147,7 @@ class FirestoreDataSource : ViewModel() {
             }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun actionAcceptedRequest(
         index: String,
         action: String,
@@ -252,7 +254,8 @@ fun obtainUserStats(
                     tasksInProgress = document.getLong("tasksInProgress")?.toInt() ?: 0,
                     puntuation = document.getLong("puntuation")?.toInt() ?: 0,
                     joinedIn = document.getTimestamp("joinedIn") ?: Timestamp.now(),
-                    weekCompletedTasks = weekCompletedTasks
+                    weekCompletedTasks = weekCompletedTasks,
+                    resetWeekValues = document.getBoolean("resetWeekValues") ?: false
                 )
                 onResult(statsUser)
             }
@@ -281,6 +284,7 @@ fun obtainUserInfo(auth: FirebaseAuth, db: FirebaseFirestore, onResult: (User) -
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 fun createRequest(
     title: String,
     description: String,

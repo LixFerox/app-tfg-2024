@@ -1,5 +1,7 @@
 package com.lixferox.app_tfg_2024.ui.components
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +42,7 @@ import com.lixferox.app_tfg_2024.R
 import com.lixferox.app_tfg_2024.data.datasource.createRequest
 import com.lixferox.app_tfg_2024.data.model.Tables
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NavBar(
     navigateToHome: () -> Unit,
@@ -94,6 +97,7 @@ fun NavBar(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FormRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: FirebaseFirestore) {

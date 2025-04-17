@@ -1,5 +1,7 @@
 package com.lixferox.app_tfg_2024.presentation.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -57,6 +59,7 @@ import com.lixferox.app_tfg_2024.ui.components.NavBar
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SearchRequestsScreen(
     paddingValues: PaddingValues,
@@ -111,6 +114,7 @@ fun SearchRequestsScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Content(
@@ -225,6 +229,7 @@ private fun Content(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun ListRequest(
     filter: String,

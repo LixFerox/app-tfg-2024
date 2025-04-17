@@ -1,5 +1,7 @@
 package com.lixferox.app_tfg_2024.presentation.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,6 +53,7 @@ import com.lixferox.app_tfg_2024.ui.components.NavBar
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TasksListScreen(
     paddingValues: PaddingValues,
@@ -105,6 +108,7 @@ fun TasksListScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun Content(
     modifier: Modifier = Modifier,
@@ -128,6 +132,7 @@ private fun Content(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: FirestoreDataSource) {
     val context = LocalContext.current
