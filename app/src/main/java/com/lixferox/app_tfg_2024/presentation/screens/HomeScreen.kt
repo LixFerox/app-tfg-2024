@@ -63,9 +63,10 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
+
+// VENTANA PRINCIPAL DEL INICIO
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -86,22 +87,22 @@ fun HomeScreen(
         topBar = {
             Header(
                 modifier = Modifier.padding(paddingValues),
-                navigateToLogin,
-                navigateToSettings,
-                navigateToProfileInfo,
-                auth,
-                db
+                navigateToLogin = navigateToLogin,
+                navigateToSettings = navigateToSettings,
+                navigateToProfileInfo = navigateToProfileInfo,
+                auth = auth,
+                db = db
             )
         },
         bottomBar = {
             NavBar(
-                navigateToHome,
-                navigateToSearch,
-                navigateToTask,
-                navigateToStats,
-                0,
-                auth,
-                db
+                navigateToHome = navigateToHome,
+                navigateToSearch = navigateToSearch,
+                navigateToTasks = navigateToTask,
+                navigateToStats = navigateToStats,
+                indexBar = 0,
+                auth = auth,
+                db = db
             )
         }
     ) { innerpadding ->
@@ -113,12 +114,14 @@ fun HomeScreen(
             Content(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(horizontal = 16.dp), auth, db, viewModel
+                    .padding(horizontal = 16.dp), auth = auth, db = db, viewModel = viewModel
             )
         }
     }
 
 }
+
+// COMPONENTE QUE IMPORTARA TODAS LAS DEMAS SECCIONES DE LA VENTANA
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -130,21 +133,22 @@ private fun Content(
 ) {
     var currentStats by remember { mutableStateOf<Stats?>(null) }
     var currentUser by remember { mutableStateOf<User?>(null) }
-    var currentActivity by remember { mutableStateOf<List<Activity?>>(emptyList()) }
+    var currentActivity by remember { mutableStateOf<List<Activity>>(emptyList()) }
 
     LaunchedEffect(auth.currentUser) {
-        obtainUserStats(auth, db) { obtainedStats ->
+        obtainUserStats(auth = auth, db = db) { obtainedStats ->
             currentStats = obtainedStats
         }
-        obtainUserInfo(auth, db) { obtainedUser ->
+        obtainUserInfo(auth = auth, db = db) { obtainedUser ->
             currentUser = obtainedUser
         }
-        viewModel.obtainActivity(auth, db) { obtainedActivity ->
+        viewModel.obtainActivity(auth = auth, db = db) { obtainedActivity ->
             currentActivity = obtainedActivity
         }
 
     }
-    if (currentUser == null) {
+
+    if (currentUser == null || currentStats == null) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
@@ -154,9 +158,12 @@ private fun Content(
         return
     }
 
-    val username by remember { mutableStateOf(currentUser!!.username) }
-    val weekCompletedTasks by remember { mutableStateOf(currentStats!!.weekCompletedTasks) }
-    val tasksInProgress by remember { mutableIntStateOf(currentStats!!.tasksInProgress) }
+    val user = requireNotNull(currentUser)
+    val stats = requireNotNull(currentStats)
+
+    val username by remember { mutableStateOf(user.username) }
+    val weekCompletedTasks by remember { mutableStateOf(stats.weekCompletedTasks) }
+    val tasksInProgress by remember { mutableIntStateOf(stats.tasksInProgress) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -165,22 +172,27 @@ private fun Content(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            WelcomeSection(username)
-            CardsSection(weekCompletedTasks, tasksInProgress)
-            RecientlyActivitySection(currentActivity)
+            WelcomeSection(username = username)
+            CardsSection(
+                totalCompletedTasks = weekCompletedTasks,
+                tasksInProgress = tasksInProgress
+            )
+            RecientlyActivitySection(currentActivity = currentActivity)
         }
         EmergencyButton(modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
+
+// COMPONENTE QUE MUESTRA EL NOMRE DEL USUARIO JUNTOA LA FECHA
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun WelcomeSection(username: String) {
     val currentDateTime = remember { mutableStateOf(LocalDateTime.now()) }
     LaunchedEffect(Unit) {
-        while (true){
+        while (true) {
             delay(1_000L)
-            currentDateTime.value=LocalDateTime.now()
+            currentDateTime.value = LocalDateTime.now()
         }
     }
 
@@ -203,7 +215,7 @@ private fun WelcomeSection(username: String) {
                     text = username,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF2196F3)
+                    color = Color(color = 0xFF2196F3)
                 )
                 Text(
                     text = "!",
@@ -233,6 +245,8 @@ private fun WelcomeSection(username: String) {
     }
 }
 
+//COMPONENTE QUE  MUESTRA LAS TAREAS DEL USUARIO
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun CardsSection(totalCompletedTasks: List<Double>, tasksInProgress: Int) {
@@ -261,14 +275,14 @@ private fun CardsSection(totalCompletedTasks: List<Double>, tasksInProgress: Int
             description = "$compteteDayOfWeek/20",
             icon = R.drawable.completed,
             color = Color(
-                0xFF8BC34A
+                color = 0xFF8BC34A
             )
         ),
         ItemCard(
             title = "Tareas en progreso",
             description = "$tasksInProgress",
             icon = R.drawable.in_progress,
-            color = Color(0xFFFFEB3B)
+            color = Color(color = 0xFFFFEB3B)
         ),
     )
     Column(
@@ -316,23 +330,23 @@ private fun CardsSection(totalCompletedTasks: List<Double>, tasksInProgress: Int
     }
 }
 
+// COMPONENTE QUE MUESTRA LA ACTIVIDAD RECUENTE DEL USUARIO
+
 @Composable
-private fun RecientlyActivitySection(currentActivity: List<Activity?>) {
+private fun RecientlyActivitySection(currentActivity: List<Activity>) {
     data class ItemCard(
         val title: String,
         val date: Timestamp,
         val description: String
     )
 
-
     val listItems = currentActivity.map { task ->
-        val title = task!!.title
+        val title = task.title
         val date = task.time
         val description = task.description
 
         ItemCard(title = title, date = date, description = description)
     }
-
 
     if (listItems.isEmpty()) {
         Column(
@@ -377,7 +391,7 @@ private fun RecientlyActivitySection(currentActivity: List<Activity?>) {
 
                     val timeInMillis = item.date.toDate().time
                     val now = System.currentTimeMillis()
-                    val diff =  abs(timeInMillis - now)
+                    val diff = abs(timeInMillis - now)
 
                     val seconds = diff / 1000
                     val minutes = seconds / 60
@@ -429,18 +443,20 @@ private fun RecientlyActivitySection(currentActivity: List<Activity?>) {
     }
 }
 
+// METODO QUE LLAMA A EMERGENCIAS
+
 @Composable
 private fun EmergencyButton(modifier: Modifier = Modifier) {
     val context = LocalContext.current
 
     Row(modifier.padding(8.dp)) {
         Button(
-            onClick = { callPhone(context, "061") },
+            onClick = { callPhone(context = context, phone = "061") },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
             shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336))
+            colors = ButtonDefaults.buttonColors(containerColor = Color(color = 0xFFF44336))
         ) {
             Text(
                 text = "Llamada de emergencia",

@@ -19,6 +19,8 @@ import com.lixferox.app_tfg_2024.presentation.screens.SignUpScreen
 import com.lixferox.app_tfg_2024.presentation.screens.StatsProfileScreen
 import com.lixferox.app_tfg_2024.presentation.screens.TasksListScreen
 
+// METODO QUE SE ENCARGA DE NAVEGAR ENTRE LAS VENTANAS DE LA APP
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NavigationWrapper(

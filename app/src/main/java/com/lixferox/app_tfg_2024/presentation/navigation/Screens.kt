@@ -2,6 +2,8 @@ package com.lixferox.app_tfg_2024.presentation.navigation
 
 import kotlinx.serialization.Serializable
 
+// NOMBRE DE LAS VENTANAS QUE HAY EN LA APP
+
 @Serializable
 object SLogin
 

@@ -41,6 +41,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
 import com.lixferox.app_tfg_2024.data.datasource.createRequest
 import com.lixferox.app_tfg_2024.data.model.Tables
+import kotlinx.coroutines.tasks.await
+
+// BARRA DE NAVEGACION DE LA APLICACION, PERMITE CAMBIAR ENTRE VENTANAS
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -79,7 +82,7 @@ fun NavBar(
             NavigationBarItem(
                 icon = {
                     Icon(
-                        painter = painterResource(item.icon),
+                        painter = painterResource(id = item.icon),
                         contentDescription = "Icono de la sección de ${item.title}"
                     )
                 },
@@ -88,40 +91,44 @@ fun NavBar(
                     item.onClick()
                 },
                 selected = selectedItem == item.title,
-                label = { Text(item.title) }
+                label = { Text(text = item.title) }
             )
         }
     }
     if (showCreateRequest) {
-        FormRequest(onDismiss = { showCreateRequest = false }, auth, db)
+        FormRequest(onDismiss = { showCreateRequest = false }, auth = auth, db = db)
     }
 }
+
+// FORMULARIO QUE NOS PERMITE AGREGAR PETICIONES
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FormRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: FirebaseFirestore) {
-    val uid = auth.currentUser?.uid
-    var isHelper by remember { mutableStateOf<Boolean?>(null) }
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var urgency by remember { mutableStateOf("") }
-    var expanded by remember { mutableStateOf(false) }
-    val opciones = listOf("Alta", "Media", "Baja")
+    val user = auth.currentUser
+        ?: run {
+            onDismiss()
+            return
+        }
+    val uid = user.uid
+
+    var isHelper by remember { mutableStateOf(false) }
+    var loading by remember { mutableStateOf(true) }
 
     LaunchedEffect(uid) {
-        uid.let {
-            db.collection(Tables.users).whereEqualTo("uid", uid).get()
-                .addOnCompleteListener { task ->
-                    val currentUser = task.result.documents.firstOrNull()
-                    if (currentUser != null) {
-                        isHelper = currentUser.getBoolean("helper") ?: false
-                    }
-                }
-        }
+        val snap = db.collection(Tables.users)
+            .whereEqualTo("uid", uid)
+            .get()
+            .await()
+        isHelper = snap.documents
+            .firstOrNull()
+            ?.getBoolean("helper")
+            ?: false
+        loading = false
     }
 
-    if (isHelper == null) {
+    if (loading) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
@@ -131,11 +138,26 @@ private fun FormRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: FirebaseF
         return
     }
 
+    var title by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var urgency by remember { mutableStateOf("") }
+    var expanded by remember { mutableStateOf(false) }
+    val opciones = listOf("Alta", "Media", "Baja")
+
     AlertDialog(
         onDismissRequest = { onDismiss() },
         confirmButton = {
             TextButton(onClick = {
-                createRequest(title, description, urgency, isHelper!!, uid!!, db, auth, onDismiss)
+                createRequest(
+                    title = title,
+                    description = description,
+                    urgency = urgency,
+                    isHelper = isHelper,
+                    uid = uid,
+                    db = db,
+                    auth = auth,
+                    onDismiss
+                )
                 onDismiss()
             }) { Text(text = "Crear") }
         },
@@ -158,7 +180,7 @@ private fun FormRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: FirebaseF
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF2196F3),
+                        focusedBorderColor = Color(color = 0xFF2196F3),
                         unfocusedBorderColor = Color.LightGray
                     ),
                     singleLine = true
@@ -170,12 +192,12 @@ private fun FormRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: FirebaseF
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF2196F3),
+                        focusedBorderColor = Color(color = 0xFF2196F3),
                         unfocusedBorderColor = Color.LightGray
                     ),
                     singleLine = true
                 )
-                if (!isHelper!!) {
+                if (!isHelper) {
                     ExposedDropdownMenuBox(
                         expanded = expanded,
                         onExpandedChange = { expanded = !expanded }
@@ -184,7 +206,7 @@ private fun FormRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: FirebaseF
                             value = urgency,
                             onValueChange = { urgency = it },
                             readOnly = true,
-                            label = { Text("Nivel de urgencia") },
+                            label = { Text(text = "Nivel de urgencia") },
                             trailingIcon = {
                                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                             },
@@ -194,7 +216,7 @@ private fun FormRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: FirebaseF
                                 .padding(vertical = 16.dp),
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFF2196F3),
+                                focusedBorderColor = Color(color = 0xFF2196F3),
                                 unfocusedBorderColor = Color.LightGray
                             ),
                             singleLine = true
@@ -204,11 +226,11 @@ private fun FormRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: FirebaseF
                             expanded = expanded,
                             onDismissRequest = { expanded = false }
                         ) {
-                            opciones.map { opcion ->
+                            opciones.map { option ->
                                 DropdownMenuItem(
-                                    text = { Text(opcion) },
+                                    text = { Text(text = option) },
                                     onClick = {
-                                        urgency = opcion
+                                        urgency = option
                                         expanded = false
                                     }
                                 )

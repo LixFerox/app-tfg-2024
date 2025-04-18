@@ -1,5 +1,7 @@
 package com.lixferox.app_tfg_2024.presentation.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,6 +53,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+// VENTANA DE LOS AJUSTES DEL USUARIO
+
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SettingsScreen(
     paddingValues: PaddingValues,
@@ -68,22 +73,22 @@ fun SettingsScreen(
         topBar = {
             Header(
                 modifier = Modifier.padding(paddingValues),
-                navigateToLogin,
-                navigateToSettings,
-                navigateToProfileInfo,
-                auth,
-                db
+                navigateToLogin = navigateToLogin,
+                navigateToSettings = navigateToSettings,
+                navigateToProfileInfo = navigateToProfileInfo,
+                auth = auth,
+                db = db
             )
         },
         bottomBar = {
             NavBar(
-                navigateToHome,
-                navigateToSearch,
-                navigateToTask,
-                navigateToStats,
-                0,
-                auth,
-                db
+                navigateToHome = navigateToHome,
+                navigateToSearch = navigateToSearch,
+                navigateToTasks = navigateToTask,
+                navigateToStats = navigateToStats,
+                indexBar = 0,
+                auth = auth,
+                db = db
             )
         }
     ) { innerpadding ->
@@ -96,11 +101,13 @@ fun SettingsScreen(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(horizontal = 16.dp)
-                    .verticalScroll(rememberScrollState()), auth, db
+                    .verticalScroll(rememberScrollState()), auth = auth, db = db
             )
         }
     }
 }
+
+// COMPONENTE QUE TIENE EL FORMULARIO DONDE ESTARAN LOS DATOS DEL USUARIO
 
 @Composable
 private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: FirebaseFirestore) {
@@ -108,7 +115,7 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
 
     var currentUser by remember { mutableStateOf<User?>(null) }
     LaunchedEffect(auth.currentUser) {
-        obtainUserInfo(auth, db) { obtainedUser ->
+        obtainUserInfo(auth = auth, db = db) { obtainedUser ->
             currentUser = obtainedUser
         }
     }
@@ -123,15 +130,17 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
         return
     }
 
+    val user = requireNotNull(currentUser)
+
     val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-    val birthCovert = format.format(currentUser!!.birth.toDate()).toString()
+    val birthCovert = format.format(user.birth.toDate()).toString()
     var pickerIsVisible by remember { mutableStateOf(false) }
 
-    var email by remember { mutableStateOf(currentUser!!.email) }
-    var username by remember { mutableStateOf(currentUser!!.username) }
-    var phone by remember { mutableStateOf(currentUser!!.phone) }
+    var email by remember { mutableStateOf(user.email) }
+    var username by remember { mutableStateOf(user.username) }
+    var phone by remember { mutableStateOf(user.phone) }
     var birth by remember { mutableStateOf(birthCovert) }
-    var address by remember { mutableStateOf(currentUser!!.address) }
+    var address by remember { mutableStateOf(user.address) }
 
     Column(
         modifier = modifier
@@ -143,7 +152,7 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
             text = "Configuración de tu cuenta",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF2196F3)
+            color = Color(color = 0xFF2196F3)
         )
         OutlinedTextField(
             value = email,
@@ -152,7 +161,7 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFF2196F3),
+                focusedBorderColor = Color(color = 0xFF2196F3),
                 unfocusedBorderColor = Color.LightGray
             ),
             singleLine = true
@@ -178,7 +187,7 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFF2196F3),
+                focusedBorderColor = Color(color = 0xFF2196F3),
                 unfocusedBorderColor = Color.LightGray
             ),
             singleLine = true,
@@ -190,11 +199,11 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
             OutlinedTextField(
                 value = birth,
                 onValueChange = { },
-                label = { Text("Fecha de nacimiento (dd/MM/yyyy)") },
+                label = { Text(text = "Fecha de nacimiento (dd/MM/yyyy)") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF2196F3),
+                    focusedBorderColor = Color(color = 0xFF2196F3),
                     unfocusedBorderColor = Color.LightGray
                 ),
                 readOnly = true,
@@ -215,7 +224,7 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFF2196F3),
+                focusedBorderColor = Color(color = 0xFF2196F3),
                 unfocusedBorderColor = Color.LightGray
             ),
             singleLine = true
@@ -227,7 +236,7 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
                 .fillMaxWidth()
                 .height(56.dp),
             shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
+            colors = ButtonDefaults.buttonColors(containerColor = Color(color = 0xFF2196F3))
         ) {
             Text(
                 text = "Guardar cambios",
@@ -239,7 +248,15 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
     if (showModal) {
         ChangeSettings(onDismiss = { showModal = false }, onAccept = {
             showModal = false
-            updateInfo(auth, db, email, username, phone, birth, address)
+            updateInfo(
+                auth = auth,
+                db = db,
+                email = email,
+                username = username,
+                phone = phone,
+                birth = birth,
+                address = address
+            )
         })
     }
     if (pickerIsVisible) {
@@ -249,6 +266,8 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
         })
     }
 }
+
+// COMPONENTE QUE PERMITE ELEGIR UNA FECHA
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -265,11 +284,13 @@ private fun BirthPicker(onDismiss: () -> Unit, onAccept: (String) -> Unit) {
                 ""
             }
             onAccept(birthFormatted)
-        }) { Text("Aceptar") }
-    }, dismissButton = { TextButton(onClick = { onDismiss() }) { Text("Cancelar") } }) {
+        }) { Text(text = "Aceptar") }
+    }, dismissButton = { TextButton(onClick = { onDismiss() }) { Text(text = "Cancelar") } }) {
         DatePicker(state = datePickerState)
     }
 }
+
+// COMPONENTE QUE MUESTRA UNA ALERTA DE QUE SE VAN A CAMBIAR LOS DATOS
 
 @Composable
 private fun ChangeSettings(onDismiss: () -> Unit, onAccept: () -> Unit) {

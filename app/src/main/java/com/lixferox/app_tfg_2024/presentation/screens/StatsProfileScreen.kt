@@ -29,9 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -58,6 +56,8 @@ import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.models.HorizontalIndicatorProperties
 import ir.ehsannarmani.compose_charts.models.Line
 
+// VENTANA DE LAS ESTADISTICAS DEL USUARIO
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun StatsProfileScreen(
@@ -76,22 +76,22 @@ fun StatsProfileScreen(
         topBar = {
             Header(
                 modifier = Modifier.padding(paddingValues),
-                navigateToLogin,
-                navigateToSettings,
-                navigateToProfileInfo,
-                auth,
-                db
+                navigateToLogin = navigateToLogin,
+                navigateToSettings = navigateToSettings,
+                navigateToProfileInfo = navigateToProfileInfo,
+                auth = auth,
+                db = db
             )
         },
         bottomBar = {
             NavBar(
-                navigateToHome,
-                navigateToSearch,
-                navigateToTask,
-                navigateToStats,
-                4,
-                auth,
-                db
+                navigateToHome = navigateToHome,
+                navigateToSearch = navigateToSearch,
+                navigateToTasks = navigateToTask,
+                navigateToStats = navigateToStats,
+                indexBar = 4,
+                auth = auth,
+                db = db
             )
         }
     ) { innerpadding ->
@@ -102,11 +102,13 @@ fun StatsProfileScreen(
         ) {
             Content(
                 modifier = Modifier
-                    .align(Alignment.TopCenter), auth, db
+                    .align(Alignment.TopCenter), auth = auth, db = db
             )
         }
     }
 }
+
+// COMPONENTE QUE IMPORTARA TODAS LAS SECCIONES A MOSTRAR
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -120,17 +122,19 @@ private fun Content(modifier: Modifier = Modifier, auth: FirebaseAuth, db: Fireb
             text = "Estadísticas",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF2196F3)
+            color = Color(color = 0xFF2196F3)
         )
         Spacer(modifier = Modifier.height(16.dp))
         InfoStats(
             modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState()),
-            auth, db
+            auth = auth, db = db
         )
     }
 }
+
+// COMONENTE QUE MUESTR LAS ESTADISTICAS DEL USUARIO
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -139,14 +143,14 @@ private fun InfoStats(modifier: Modifier = Modifier, auth: FirebaseAuth, db: Fir
     var currentUser by remember { mutableStateOf<User?>(null) }
 
     LaunchedEffect(auth.currentUser) {
-        obtainUserStats(auth, db) { obtainedStats ->
+        obtainUserStats(auth = auth, db = db) { obtainedStats ->
             currentStats = obtainedStats
         }
-        obtainUserInfo(auth, db) { obtainedUser ->
+        obtainUserInfo(auth = auth, db = db) { obtainedUser ->
             currentUser = obtainedUser
         }
     }
-    if (currentUser == null) {
+    if (currentUser == null || currentStats == null) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
@@ -156,11 +160,13 @@ private fun InfoStats(modifier: Modifier = Modifier, auth: FirebaseAuth, db: Fir
         return
     }
 
-    val acceptedTasks by remember { mutableIntStateOf(currentStats!!.totalCompletedTasks) }
-    val totalWeekCompleted = currentStats!!.weekCompletedTasks.sum().toInt()
-    val userLevel by remember { mutableIntStateOf(currentStats!!.level) }
-    val userPoints by remember { mutableIntStateOf(currentStats!!.points) }
-    val listTasksWeek by remember { mutableStateOf(currentStats?.weekCompletedTasks) }
+    val stats = requireNotNull(currentStats)
+
+    val acceptedTasks by remember { mutableIntStateOf(stats.totalCompletedTasks) }
+    val totalWeekCompleted = stats.weekCompletedTasks.sum().toInt()
+    val userLevel by remember { mutableIntStateOf(stats.level) }
+    val userPoints by remember { mutableIntStateOf(stats.points) }
+    val listTasksWeek by remember { mutableStateOf(stats.weekCompletedTasks) }
 
 
     data class ItemStats(
@@ -175,13 +181,13 @@ private fun InfoStats(modifier: Modifier = Modifier, auth: FirebaseAuth, db: Fir
             title = "Solicitudes Aceptadas",
             icon = R.drawable.trending,
             value = "$acceptedTasks",
-            color = Color(0xFF2196F3)
+            color = Color(color = 0xFF2196F3)
         ),
         ItemStats(
             title = "Solicitudes por Semana",
             icon = R.drawable.clock,
             value = "$totalWeekCompleted",
-            color = Color(0xFFFFC107)
+            color = Color(color = 0xFFFFC107)
         )
     )
 
@@ -256,7 +262,7 @@ private fun InfoStats(modifier: Modifier = Modifier, auth: FirebaseAuth, db: Fir
                     Box(
                         modifier = Modifier
                             .size(32.dp)
-                            .background(Color(0xFFFFC107), shape = CircleShape),
+                            .background(Color(color = 0xFFFFC107), shape = CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -284,7 +290,7 @@ private fun InfoStats(modifier: Modifier = Modifier, auth: FirebaseAuth, db: Fir
                         fontWeight = FontWeight.SemiBold,
                     )
                 }
-                LevelBar(userPoints, 1f)
+                LevelBar(levelBar = userPoints, fraction = 1f)
             }
         }
         Card(modifier = Modifier.fillMaxWidth()) {
@@ -313,9 +319,12 @@ private fun InfoStats(modifier: Modifier = Modifier, auth: FirebaseAuth, db: Fir
                             listOf(
                                 Line(
                                     label = "Tareas",
-                                    values = listTasksWeek!!,
+                                    values = listTasksWeek,
                                     color = Brush.radialGradient(
-                                        colors = listOf(Color(0xFF00BCD4), Color(0xFF00BCD4))
+                                        colors = listOf(
+                                            Color(color = 0xFF00BCD4),
+                                            Color(color = 0xFF00BCD4)
+                                        )
                                     )
                                 )
                             )

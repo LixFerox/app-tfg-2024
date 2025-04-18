@@ -65,6 +65,8 @@ import ir.ehsannarmani.compose_charts.models.HorizontalIndicatorProperties
 import ir.ehsannarmani.compose_charts.models.Line
 import java.util.Date
 
+// VENTANA DE LA INFORMACION DEL USUARIO
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ProfileInfoScreen(
@@ -83,22 +85,22 @@ fun ProfileInfoScreen(
         topBar = {
             Header(
                 modifier = Modifier.padding(paddingValues),
-                navigateToLogin,
-                navigateToSettings,
-                navigateToProfileInfo,
-                auth,
-                db
+                navigateToLogin = navigateToLogin,
+                navigateToSettings = navigateToSettings,
+                navigateToProfileInfo = navigateToProfileInfo,
+                auth = auth,
+                db = db
             )
         },
         bottomBar = {
             NavBar(
-                navigateToHome,
-                navigateToSearch,
-                navigateToTask,
-                navigateToStats,
-                0,
-                auth,
-                db
+                navigateToHome = navigateToHome,
+                navigateToSearch = navigateToSearch,
+                navigateToTasks = navigateToTask,
+                navigateToStats = navigateToStats,
+                indexBar = 0,
+                auth = auth,
+                db = db
             )
         }
     ) { innerpadding ->
@@ -111,11 +113,13 @@ fun ProfileInfoScreen(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(horizontal = 16.dp),
-                auth, db, navigateToLogin
+                auth = auth, db = db, navigateToLogin = navigateToLogin
             )
         }
     }
 }
+
+// COMPONENTE QUE IMPORTARA TODAS LAS SECCIONES A MOSTRAR
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -129,14 +133,14 @@ private fun ProfileData(
     var currentUser by remember { mutableStateOf<User?>(null) }
 
     LaunchedEffect(auth.currentUser) {
-        obtainUserStats(auth, db) { obtainedStats ->
+        obtainUserStats(auth = auth, db = db) { obtainedStats ->
             currentStats = obtainedStats
         }
-        obtainUserInfo(auth, db) { obtainedUser ->
+        obtainUserInfo(auth = auth, db = db) { obtainedUser ->
             currentUser = obtainedUser
         }
     }
-    if (currentUser == null) {
+    if (currentUser == null || currentStats == null) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
@@ -146,13 +150,16 @@ private fun ProfileData(
         return
     }
 
-    val username by remember { mutableStateOf(currentUser!!.username) }
-    val level by remember { mutableIntStateOf(currentStats!!.level) }
-    val puntuation by remember { mutableDoubleStateOf(currentStats!!.puntuation) }
-    val levelBar by remember { mutableIntStateOf(currentStats!!.points) }
-    val totalRequests by remember { mutableIntStateOf(currentStats!!.totalCompletedTasks) }
-    val joinedIn by remember { mutableStateOf(currentStats!!.joinedIn) }
-    val listTasksWeek by remember { mutableStateOf(currentStats?.weekCompletedTasks) }
+    val user = requireNotNull(currentUser)
+    val stats = requireNotNull(currentStats)
+
+    val username by remember { mutableStateOf(user.username) }
+    val level by remember { mutableIntStateOf(stats.level) }
+    val puntuation by remember { mutableDoubleStateOf(stats.puntuation) }
+    val levelBar by remember { mutableIntStateOf(stats.points) }
+    val totalRequests by remember { mutableIntStateOf(stats.totalCompletedTasks) }
+    val joinedIn by remember { mutableStateOf(stats.joinedIn) }
+    val listTasksWeek by remember { mutableStateOf(stats.weekCompletedTasks) }
 
     Column(
         modifier = modifier
@@ -163,14 +170,14 @@ private fun ProfileData(
     ) {
         var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
-        UserHeader(username, level)
-        LevelBar(levelBar, 0.5f)
+        UserHeader(username = username, level = level)
+        LevelBar(levelBar = levelBar, fraction = 0.5f)
         Spacer(Modifier.height(8.dp))
-        StatsSection(puntuation, totalRequests)
+        StatsSection(puntuation = puntuation, totalRequests = totalRequests)
         Spacer(Modifier.height(8.dp))
-        InfoSection(joinedIn, listTasksWeek)
-        RequestButton(auth, db, onError = { mesage ->
-            errorMessage = mesage
+        InfoSection(joinedIn = joinedIn, listTasksWeek = listTasksWeek)
+        DeleteAccount(auth = auth, db = db, onError = { message ->
+            errorMessage = message
         }, onSuccess = { navigateToLogin() })
         if (errorMessage != null) {
             AlertDialog(onDismissRequest = { errorMessage = null }, confirmButton = {
@@ -191,6 +198,8 @@ private fun ProfileData(
         }
     }
 }
+
+// COMPONENTE QUE MOSTRARA EL NOMBRE DEL USUARIO Y SU ICONO
 
 @Composable
 private fun UserHeader(username: String, level: Int) {
@@ -213,7 +222,7 @@ private fun UserHeader(username: String, level: Int) {
                 text = username,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF2196F3)
+                color = Color(color = 0xFF2196F3)
             )
             Text(
                 text = "!",
@@ -231,6 +240,8 @@ private fun UserHeader(username: String, level: Int) {
     )
 }
 
+// COMPONENTE QUE MOSTRARA LA BARRA DE NIVEL DEL USUARIO
+
 @Composable
 fun LevelBar(levelBar: Int, fraction: Float) {
     val points by remember { mutableFloatStateOf(levelBar.toFloat()) }
@@ -240,10 +251,12 @@ fun LevelBar(levelBar: Int, fraction: Float) {
         modifier = Modifier
             .fillMaxWidth(fraction)
             .height(8.dp),
-        color = Color(0xFF4CAF50),
+        color = Color(color = 0xFF4CAF50),
         trackColor = Color.LightGray,
     )
 }
+
+// COMPONENTE QUE MOSTRARA LAS ESTADISTICAS DEL USUARIO
 
 @Composable
 private fun StatsSection(puntuation: Double, totalRequests: Int) {
@@ -260,13 +273,13 @@ private fun StatsSection(puntuation: Double, totalRequests: Int) {
             title = if (puntuation == 0.0) "0/5" else "$puntuation/5",
             data = "Puntuación",
             R.drawable.points,
-            Color(0xFFFFC107)
+            Color(color = 0xFFFFC107)
         ),
         ItemMenu(
             title = "$totalRequests",
             data = "Peticiones",
             R.drawable.request,
-            Color(0xFF00BCD4)
+            Color(color = 0xFF00BCD4)
         ),
     )
 
@@ -318,8 +331,10 @@ private fun StatsSection(puntuation: Double, totalRequests: Int) {
     }
 }
 
+// COMPONENTE QUE MOSTRARA LA ANTIGUEDAD DEL USUARIO Y LAS TAREAS DE LA SEMANA
+
 @Composable
-private fun InfoSection(joinedIn: Timestamp, listTasksWeek: List<Double>?) {
+private fun InfoSection(joinedIn: Timestamp, listTasksWeek: List<Double>) {
     var joined by remember { mutableStateOf("") }
     var typeJoined by remember { mutableStateOf("") }
 
@@ -378,7 +393,7 @@ private fun InfoSection(joinedIn: Timestamp, listTasksWeek: List<Double>?) {
                     Icon(
                         painter = painterResource(R.drawable.time),
                         contentDescription = "Icono de la sección antiguedad",
-                        tint = Color(0xFF3F51B5)
+                        tint = Color(color = 0xFF3F51B5)
                     )
                 }
                 Row(
@@ -431,7 +446,7 @@ private fun InfoSection(joinedIn: Timestamp, listTasksWeek: List<Double>?) {
                     Icon(
                         painter = painterResource(R.drawable.graphic),
                         contentDescription = "Icono del gráfico semanal",
-                        tint = Color(0xFFFF9800)
+                        tint = Color(color = 0xFFFF9800)
                     )
                 }
                 Box(
@@ -444,7 +459,7 @@ private fun InfoSection(joinedIn: Timestamp, listTasksWeek: List<Double>?) {
                             listOf(
                                 Line(
                                     label = "Tareas",
-                                    values = listTasksWeek!!,
+                                    values = listTasksWeek,
                                     color = Brush.radialGradient(
                                         colors = listOf(Color(0xFF00BCD4), Color(0xFF00BCD4))
                                     )
@@ -465,8 +480,10 @@ private fun InfoSection(joinedIn: Timestamp, listTasksWeek: List<Double>?) {
     }
 }
 
+// COMPONENTE QUE ELIMINARA LA CUENTA DEL USUARIO
+
 @Composable
-private fun RequestButton(
+private fun DeleteAccount(
     auth: FirebaseAuth,
     db: FirebaseFirestore,
     onError: (String) -> Unit,
@@ -478,7 +495,7 @@ private fun RequestButton(
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text(text = "Confirmación") },
-            text = { Text("¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer.") },
+            text = { Text(text = "¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer.") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -486,14 +503,14 @@ private fun RequestButton(
                         showDeleteDialog = false
                     }
                 ) {
-                    Text("Confirmar")
+                    Text(text = "Confirmar")
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { showDeleteDialog = false }
                 ) {
-                    Text("Cancelar")
+                    Text(text = "Cancelar")
                 }
             }
         )
@@ -504,7 +521,7 @@ private fun RequestButton(
             .fillMaxWidth()
             .height(56.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336))
+        colors = ButtonDefaults.buttonColors(containerColor = Color(color = 0xFFF44336))
     ) {
         Text(
             text = "Eliminar cuenta",

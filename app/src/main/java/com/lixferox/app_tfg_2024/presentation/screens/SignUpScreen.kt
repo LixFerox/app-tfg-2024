@@ -1,7 +1,9 @@
 package com.lixferox.app_tfg_2024.presentation.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -20,6 +22,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -27,9 +32,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -47,6 +54,11 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
 import com.lixferox.app_tfg_2024.data.datasource.createAccountFirebase
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+// VENTANA DE CREACION DE CUENTA
 
 @Composable
 fun SignUpScreen(
@@ -64,10 +76,12 @@ fun SignUpScreen(
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Logo()
-        Form(navigateToLogin, auth, db)
-        SignUp(navigateToLogin)
+        Form(navigateToLogin = navigateToLogin, auth = auth, db = db)
+        SignUp(navigateToLogin = navigateToLogin)
     }
 }
+
+// COMPONENTE QUE MUESTRA EL LOGO DE LA APLICACION
 
 @Composable
 private fun Logo() {
@@ -86,14 +100,18 @@ private fun Logo() {
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
-            color = Color(0xFF2196F3)
+            color = Color(color = 0xFF2196F3)
         )
     }
 }
 
+// COMPONENTE QUE TIENE EL FORMULARIO A RELLENAR CON LOS DATOS DEL USUARIO
+
 @Composable
 private fun Form(navigateToLogin: () -> Unit, auth: FirebaseAuth, db: FirebaseFirestore) {
-    val context= LocalContext.current
+    var pickerIsVisible by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var email by rememberSaveable { mutableStateOf("") }
     var username by rememberSaveable { mutableStateOf("") }
@@ -128,7 +146,7 @@ private fun Form(navigateToLogin: () -> Unit, auth: FirebaseAuth, db: FirebaseFi
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF2196F3),
+                    focusedBorderColor = Color(color = 0xFF2196F3),
                 ),
                 singleLine = true
             )
@@ -139,27 +157,29 @@ private fun Form(navigateToLogin: () -> Unit, auth: FirebaseAuth, db: FirebaseFi
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF2196F3),
+                    focusedBorderColor = Color(color = 0xFF2196F3),
                 ),
                 singleLine = true
             )
-            OutlinedTextField(
-                value = birth,
-                onValueChange = { birth = it },
-                label = { Text(text = "Fecha de nacimiento") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                trailingIcon = {
-                    Icon(
-                        painter = painterResource(R.drawable.timetable),
-                        contentDescription = "Icono de la fecha de nacimiento"
-                    )
-                },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF2196F3),
-                ),
-                singleLine = true
-            )
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = birth,
+                    onValueChange = { },
+                    label = { Text(text = "Fecha de nacimiento (dd/MM/yyyy)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(color = 0xFF2196F3)
+                    ),
+                    readOnly = true,
+                    singleLine = true
+                )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clickable { pickerIsVisible = true }
+                )
+            }
             OutlinedTextField(
                 value = address,
                 onValueChange = { address = it },
@@ -173,7 +193,7 @@ private fun Form(navigateToLogin: () -> Unit, auth: FirebaseAuth, db: FirebaseFi
                     )
                 },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF2196F3),
+                    focusedBorderColor = Color(color = 0xFF2196F3),
                 ),
                 singleLine = true
             )
@@ -190,7 +210,7 @@ private fun Form(navigateToLogin: () -> Unit, auth: FirebaseAuth, db: FirebaseFi
                     )
                 },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF2196F3),
+                    focusedBorderColor = Color(color = 0xFF2196F3),
                 ),
                 singleLine = true
             )
@@ -212,7 +232,7 @@ private fun Form(navigateToLogin: () -> Unit, auth: FirebaseAuth, db: FirebaseFi
                     }
                 },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF2196F3),
+                    focusedBorderColor = Color(color = 0xFF2196F3),
                 ),
                 singleLine = true
             )
@@ -234,7 +254,7 @@ private fun Form(navigateToLogin: () -> Unit, auth: FirebaseAuth, db: FirebaseFi
                     }
                 },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF2196F3),
+                    focusedBorderColor = Color(color = 0xFF2196F3),
                 ),
                 singleLine = true
             )
@@ -255,24 +275,24 @@ private fun Form(navigateToLogin: () -> Unit, auth: FirebaseAuth, db: FirebaseFi
                     createAccountFirebase(
                         onSuccess = { navigateToLogin() },
                         onError = { message -> errorMessage = message },
-                        auth,
-                        db,
-                        email,
-                        password,
-                        repassword,
-                        username,
-                        birth,
-                        isAssistant,
-                        address,
-                        phone,
-                        context
+                        auth = auth,
+                        db = db,
+                        email = email,
+                        password = password,
+                        repassword = repassword,
+                        username = username,
+                        birth = birth,
+                        isHelper = isAssistant,
+                        address = address,
+                        phone = phone,
+                        context = context
                     )
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
+                colors = ButtonDefaults.buttonColors(containerColor = Color(color = 0xFF2196F3))
             ) {
                 Text(
                     text = "Crear cuenta",
@@ -299,7 +319,15 @@ private fun Form(navigateToLogin: () -> Unit, auth: FirebaseAuth, db: FirebaseFi
             }
         })
     }
+    if (pickerIsVisible) {
+        BirthPicker(onDismiss = { pickerIsVisible = false }, onAccept = { task ->
+            birth = task
+            pickerIsVisible = false
+        })
+    }
 }
+
+// COMPONENTE QUE EN CASO DE TENER CUENTA MUEVE AL USUARIO A LA PAGINA DE INICIO DE SESION
 
 @Composable
 private fun SignUp(navigateToLogin: () -> Unit) {
@@ -324,10 +352,32 @@ private fun SignUp(navigateToLogin: () -> Unit) {
                     text = "Inicia sesión",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF2196F3)
+                    color = Color(color = 0xFF2196F3)
                 )
             }
         }
     }
 }
 
+// COMPONENTE QUE PERMITE ELEGIR UNA FECHA
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BirthPicker(onDismiss: () -> Unit, onAccept: (String) -> Unit) {
+    val datePickerState = rememberDatePickerState()
+    DatePickerDialog(onDismissRequest = { onDismiss() }, confirmButton = {
+        TextButton(onClick = {
+            val birth = datePickerState.selectedDateMillis
+            val birthFormatted = if (birth != null) {
+                val date = Date(birth)
+                val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                format.format(date)
+            } else {
+                ""
+            }
+            onAccept(birthFormatted)
+        }) { Text(text = "Aceptar") }
+    }, dismissButton = { TextButton(onClick = { onDismiss() }) { Text(text = "Cancelar") } }) {
+        DatePicker(state = datePickerState)
+    }
+}

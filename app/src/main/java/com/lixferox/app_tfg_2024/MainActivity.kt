@@ -38,10 +38,16 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             navHostController = rememberNavController()
-           IsLogged(auth, navHostController)
+            IsLogged(auth = auth, navHostController = navHostController)
             Apptfg2024Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    NavigationWrapper(navHostController, auth, db, innerPadding, viewModel)
+                    NavigationWrapper(
+                        navHostController = navHostController,
+                        auth = auth,
+                        db = db,
+                        padding = innerPadding,
+                        viewModel = viewModel
+                    )
                 }
             }
         }

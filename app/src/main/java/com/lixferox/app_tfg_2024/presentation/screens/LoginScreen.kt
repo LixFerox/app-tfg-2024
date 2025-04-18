@@ -44,6 +44,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.lixferox.app_tfg_2024.R
 import com.lixferox.app_tfg_2024.data.datasource.loginFirebase
 
+// VENTANA DEL LOGIN
+
 @Composable
 fun LoginScreen(
     paddingValues: PaddingValues,
@@ -58,10 +60,19 @@ fun LoginScreen(
             .padding(24.dp)
     ) {
         Logo(modifier = Modifier.align(Alignment.TopCenter))
-        Form(modifier = Modifier.align(Alignment.Center), navigateToHome, auth)
-        SignIn(modifier = Modifier.align(Alignment.BottomCenter), navigateToSignUp)
+        Form(
+            modifier = Modifier.align(Alignment.Center),
+            navigateToHome = navigateToHome,
+            auth = auth
+        )
+        SignIn(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            navigateToSignUp = navigateToSignUp
+        )
     }
 }
+
+// COMPONENTE QUE MOSTRARA EL LOGO DE LA APP
 
 @Composable
 private fun Logo(modifier: Modifier = Modifier) {
@@ -80,10 +91,12 @@ private fun Logo(modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
-            color = Color(0xFF2196F3)
+            color = Color(color = 0xFF2196F3)
         )
     }
 }
+
+// COMPONENTE QUE TENDRA EL FORMULARIO DE INICIO DE SESION
 
 @Composable
 private fun Form(
@@ -92,8 +105,8 @@ private fun Form(
     auth: FirebaseAuth
 ) {
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
-    var email by remember { mutableStateOf("jorgerosadojulian@gmail.com") }
-    var password by remember { mutableStateOf("User@123") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
 
     Card(
@@ -123,7 +136,7 @@ private fun Form(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF2196F3),
+                    focusedBorderColor = Color(color = 0xFF2196F3),
                     unfocusedBorderColor = Color.LightGray
                 ),
                 singleLine = true
@@ -141,7 +154,7 @@ private fun Form(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF2196F3),
+                    focusedBorderColor = Color(color = 0xFF2196F3),
                     unfocusedBorderColor = Color.LightGray
                 ),
                 visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -163,16 +176,16 @@ private fun Form(
                     loginFirebase(
                         onSuccess = { navigateToHome() },
                         onError = { message -> errorMessage = message },
-                        auth,
-                        email,
-                        password
+                        auth = auth,
+                        email = email,
+                        password = password
                     )
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
+                colors = ButtonDefaults.buttonColors(containerColor = Color(color = 0xFF2196F3))
             ) {
                 Text(
                     text = "Acceder",
@@ -201,6 +214,8 @@ private fun Form(
     }
 }
 
+// COMPONENTE QUE MOVERA AL USUARIO A LA VENTANA DE CREAR CUENTA EN CASO DE NO TENER UNA
+
 @Composable
 private fun SignIn(modifier: Modifier = Modifier, navigateToSignUp: () -> Unit) {
     Column(
@@ -222,7 +237,7 @@ private fun SignIn(modifier: Modifier = Modifier, navigateToSignUp: () -> Unit) 
                     text = "Regístrate",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF2196F3)
+                    color = Color(color = 0xFF2196F3)
                 )
             }
         }

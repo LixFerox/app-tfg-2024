@@ -56,8 +56,11 @@ import com.lixferox.app_tfg_2024.data.model.Tables
 import com.lixferox.app_tfg_2024.model.Request
 import com.lixferox.app_tfg_2024.ui.components.Header
 import com.lixferox.app_tfg_2024.ui.components.NavBar
+import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Locale
+
+// VENTANA DE LA LISTA DE PETICIONES
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -78,22 +81,22 @@ fun SearchRequestsScreen(
         topBar = {
             Header(
                 modifier = Modifier.padding(paddingValues),
-                navigateToLogin,
-                navigateToSettings,
-                navigateToProfileInfo,
-                auth,
-                db
+                navigateToLogin = navigateToLogin,
+                navigateToSettings = navigateToSettings,
+                navigateToProfileInfo = navigateToProfileInfo,
+                auth = auth,
+                db = db
             )
         },
         bottomBar = {
             NavBar(
-                navigateToHome,
-                navigateToSearch,
-                navigateToTask,
-                navigateToStats,
-                1,
-                auth,
-                db
+                navigateToHome = navigateToHome,
+                navigateToSearch = navigateToSearch,
+                navigateToTasks = navigateToTask,
+                navigateToStats = navigateToStats,
+                indexBar = 1,
+                auth = auth,
+                db = db
             )
         }
     ) { innerpadding ->
@@ -106,13 +109,15 @@ fun SearchRequestsScreen(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(horizontal = 16.dp),
-                auth,
-                db,
-                viewModel
+                auth = auth,
+                db = db,
+                viewModel = viewModel
             )
         }
     }
 }
+
+// COMPONENTE QUE IMPORTARA TODAS LAS SECCIONES A MOSTRAR
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -123,29 +128,33 @@ private fun Content(
     db: FirebaseFirestore,
     viewModel: FirestoreDataSource
 ) {
-    val uid = auth.currentUser?.uid
-    var isHelper by remember { mutableStateOf<Boolean?>(null) }
-    var expanded by remember { mutableStateOf(false) }
-    val opciones = listOf("Quitar filtro", "Alta", "Media", "Baja")
-    var filter by remember { mutableStateOf("") }
+    val user = auth.currentUser
+        ?: run {
+            return
+        }
+    val uid = user.uid
+
+    var isHelper by remember { mutableStateOf(false) }
+    var loading by remember { mutableStateOf(true) }
     var listRequest by remember { mutableStateOf<List<Request>>(emptyList()) }
 
     LaunchedEffect(uid) {
-        uid.let {
-            db.collection(Tables.users).whereEqualTo("uid", uid).get()
-                .addOnCompleteListener { task ->
-                    val currentUser = task.result.documents.firstOrNull()
-                    if (currentUser != null) {
-                        isHelper = currentUser.getBoolean("helper") ?: false
-                        viewModel.obtainAllRequest(db, isHelper!!) { requests ->
-                            listRequest = requests
-                        }
-                    }
-                }
+        val snap = db.collection(Tables.users)
+            .whereEqualTo("uid", uid)
+            .get()
+            .await()
+        isHelper = snap.documents
+            .firstOrNull()
+            ?.getBoolean("helper")
+            ?: false
+
+        viewModel.obtainAllRequest(db = db, isHelper = isHelper) { requests ->
+            listRequest = requests
+            loading = false
         }
     }
 
-    if (isHelper == null) {
+    if (loading) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
@@ -154,6 +163,10 @@ private fun Content(
         }
         return
     }
+
+    var expanded by remember { mutableStateOf(false) }
+    val opciones = listOf("Quitar filtro", "Alta", "Media", "Baja")
+    var filter by remember { mutableStateOf("") }
 
     Column(
         modifier = modifier
@@ -164,10 +177,10 @@ private fun Content(
             text = "Tareas disponibles",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF2196F3)
+            color = Color(color = 0xFF2196F3)
         )
         Spacer(modifier = Modifier.height(8.dp))
-        if (isHelper == true) {
+        if (isHelper) {
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { expanded = !expanded }
@@ -176,7 +189,7 @@ private fun Content(
                     value = filter,
                     onValueChange = { filter = it },
                     readOnly = true,
-                    label = { Text("Nivel de urgencia") },
+                    label = { Text(text = "Nivel de urgencia") },
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                     },
@@ -186,7 +199,7 @@ private fun Content(
                         .padding(vertical = 16.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF2196F3),
+                        focusedBorderColor = Color(color = 0xFF2196F3),
                         unfocusedBorderColor = Color.LightGray
                     ),
                     singleLine = true
@@ -201,7 +214,7 @@ private fun Content(
                             HorizontalDivider(modifier = Modifier.height(4.dp))
                             DropdownMenuItem(
                                 text = {
-                                    Text(opcion)
+                                    Text(text = opcion)
                                 },
                                 onClick = {
                                     filter = ""
@@ -212,7 +225,7 @@ private fun Content(
                         } else {
                             DropdownMenuItem(
                                 text = {
-                                    Text(opcion)
+                                    Text(text = opcion)
                                 },
                                 onClick = {
                                     filter = opcion
@@ -225,9 +238,11 @@ private fun Content(
                 }
             }
         }
-        ListRequest(filter, auth, db, viewModel, listRequest, isHelper!!)
+        ListRequest(filter, auth, db, viewModel, listRequest, isHelper)
     }
 }
+
+// COMPONENTE QUE MUESTRA LA LISTA DE PETICIONES DE LOS USUARIOS
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -345,9 +360,9 @@ private fun ListRequest(
                             modifier = Modifier
                                 .align(Alignment.End)
                                 .background(
-                                    color = if (item.urgency.uppercase() == "ALTA") Color(0xFFF44336)
-                                    else if (item.urgency.uppercase() == "MEDIA") Color(0xFFFF9800)
-                                    else if (item.urgency.uppercase() == "BAJA") Color(0xFF4CAF50) else Color.Gray,
+                                    color = if (item.urgency.uppercase() == "ALTA") Color(color = 0xFFF44336)
+                                    else if (item.urgency.uppercase() == "MEDIA") Color(color = 0xFFFF9800)
+                                    else if (item.urgency.uppercase() == "BAJA") Color(color = 0xFF4CAF50) else Color.Gray,
                                     shape = RoundedCornerShape(8.dp)
                                 )
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
@@ -368,7 +383,7 @@ private fun ListRequest(
                                 .fillMaxWidth()
                                 .padding(top = 8.dp),
                             shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(color = 0xFF2196F3))
                         ) {
                             Text(
                                 text = "Aceptar solicitud",
@@ -383,20 +398,22 @@ private fun ListRequest(
         }
     }
     if (showModal) {
-        AcceptRequest(
-            onDismiss = { showModal = false },
-            onAccept = {
-                viewModel.limitRequest(auth, db) { limit ->
-                    if (limit == 3) {
-                        showLimit = true
-                    } else {
-                        viewModel.acceptRequest(indexTask!!, db, auth)
-                        showModal = false
+        indexTask?.let { id ->
+            AcceptRequest(
+                onDismiss = { showModal = false },
+                onAccept = {
+                    viewModel.limitRequest(auth = auth, db = db) { limit ->
+                        if (limit == 3) {
+                            showLimit = true
+                        } else {
+                            viewModel.acceptRequest(index = id, db = db, auth = auth)
+                            showModal = false
+                        }
                     }
-                }
-            },
-            indexTask
-        )
+                },
+                id
+            )
+        }
     }
     if (showLimit) {
         LimitRequest(onDismiss = {
@@ -406,9 +423,11 @@ private fun ListRequest(
     }
 }
 
+// COMPONENTE QUE PERMITE ACEPTAR UNA PETICION
+
 @Composable
-private fun AcceptRequest(onDismiss: () -> Unit, onAccept: () -> Unit, index: String?) {
-    if (index?.isNotEmpty() == true) {
+private fun AcceptRequest(onDismiss: () -> Unit, onAccept: () -> Unit, index: String) {
+    if (index.isNotEmpty()) {
         AlertDialog(
             onDismissRequest = { onDismiss() },
             dismissButton = { TextButton(onClick = { onDismiss() }) { Text(text = "Cancelar") } },
@@ -428,6 +447,8 @@ private fun AcceptRequest(onDismiss: () -> Unit, onAccept: () -> Unit, index: St
             })
     }
 }
+
+// COMPONENTE QUE LIMITA LAS PETICIONES DEL USUARIO
 
 @Composable
 private fun LimitRequest(onDismiss: () -> Unit) {

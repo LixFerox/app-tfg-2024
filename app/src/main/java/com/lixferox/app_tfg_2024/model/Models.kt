@@ -43,7 +43,7 @@ data class Stats(
     val tasksInProgress: Int,
     val puntuation: Double,
     val joinedIn: Timestamp,
-    val resetWeekValues : Boolean
+    val resetWeekValues: Boolean
 )
 
 data class Activity(

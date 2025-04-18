@@ -38,6 +38,8 @@ import com.lixferox.app_tfg_2024.data.datasource.obtainUserInfo
 import com.lixferox.app_tfg_2024.model.User
 import com.lixferox.app_tfg_2024.common.openWeb
 
+// SECCION DE NAVEGACION
+
 @Composable
 fun Header(
     modifier: Modifier = Modifier,
@@ -47,18 +49,21 @@ fun Header(
     auth: FirebaseAuth,
     db: FirebaseFirestore
 ) {
+    val uid = auth.currentUser?.uid
     val context = LocalContext.current
     var isExpandedSettings by remember { mutableStateOf(false) }
     var isExpandedProfile by remember { mutableStateOf(false) }
     var currentUser by remember { mutableStateOf<User?>(null) }
 
-    LaunchedEffect(auth.currentUser) {
-        obtainUserInfo(auth, db) { obtainedUser ->
+    LaunchedEffect(uid) {
+        obtainUserInfo(auth = auth, db = db) { obtainedUser ->
             currentUser = obtainedUser
         }
     }
 
-    if (currentUser == null) {
+    val user = currentUser
+
+    if (user == null) {
         Box(
             modifier = modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
@@ -79,7 +84,7 @@ fun Header(
         Box {
             IconButton(onClick = { isExpandedSettings = !isExpandedSettings }) {
                 Icon(
-                    painter = painterResource(R.drawable.settings),
+                    painter = painterResource(id = R.drawable.settings),
                     contentDescription = "Icono de los ajustes de usuario",
                     tint = Color.Gray
                 )
@@ -89,7 +94,7 @@ fun Header(
                 onDismiss = { isExpandedSettings = false },
                 onSettingsClick = { navigateToSettings() },
                 onProfileClick = { navigateToProfileInfo() },
-                onHelpClick = { openWeb(context, "http://vitalist.lixferox.es") }
+                onHelpClick = { openWeb(context = context, url = "http://vitalist.lixferox.es") }
             )
         }
         Box {
@@ -99,13 +104,13 @@ fun Header(
                     .padding(vertical = 8.dp)
                     .clickable { isExpandedProfile = !isExpandedProfile }) {
                 Icon(
-                    painter = painterResource(R.drawable.profile),
+                    painter = painterResource(id = R.drawable.profile),
                     contentDescription = "Icono del avatar del perfil",
                     tint = Color.Gray,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = currentUser!!.username, style = MaterialTheme.typography.bodyMedium)
+                Text(text = user.username, style = MaterialTheme.typography.bodyMedium)
             }
             DropMenuProfile(
                 expanded = isExpandedProfile,
@@ -119,6 +124,8 @@ fun Header(
 
     }
 }
+
+// MENU DESPLEGABLE DE AJUSTES
 
 @Composable
 private fun DropMenuSettings(
@@ -146,7 +153,7 @@ private fun DropMenuSettings(
                 text = { Text(text = item.title) },
                 leadingIcon = {
                     Icon(
-                        painter = painterResource(item.icon),
+                        painter = painterResource(id = item.icon),
                         contentDescription = "Icono de la sección ${item.title}"
                     )
                 },
@@ -160,6 +167,8 @@ private fun DropMenuSettings(
         }
     }
 }
+
+//MENU DESPLEGABLE PARA CERRAR LA SESION DEL USUARIO
 
 @Composable
 private fun DropMenuProfile(
@@ -183,7 +192,7 @@ private fun DropMenuProfile(
                 onClick = { onLogoutClick() },
                 leadingIcon = {
                     Icon(
-                        painter = painterResource(item.icon),
+                        painter = painterResource(id = item.icon),
                         contentDescription = "Icono de la sección ${item.title}"
                     )
                 }

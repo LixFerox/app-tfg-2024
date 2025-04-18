@@ -19,10 +19,12 @@ import com.lixferox.app_tfg_2024.model.User
 import java.text.SimpleDateFormat
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.LocalTime
 import java.util.Locale
 
 class FirestoreDataSource : ViewModel() {
+
+    // FUNCION QUE OBTIENE TODAS LAS PETICIONES
+
     fun obtainAllRequest(
         db: FirebaseFirestore,
         isHelper: Boolean,
@@ -61,6 +63,8 @@ class FirestoreDataSource : ViewModel() {
         }
     }
 
+    // FUNCION QUE PERMITE ACEPTAR PETICIONES
+
     @RequiresApi(Build.VERSION_CODES.O)
     fun acceptRequest(index: String, db: FirebaseFirestore, auth: FirebaseAuth) {
         val uid = auth.currentUser?.uid
@@ -70,8 +74,8 @@ class FirestoreDataSource : ViewModel() {
                     val document = task.result.documents.firstOrNull()
                     val username = document?.getString("username")
                     val isHelper = document?.getBoolean("helper") ?: false
-                    val phone = if (isHelper) "helperPhone" else "olderPhone"
-                    val address = if (isHelper) "helperAddress" else "olderAddress"
+                    val phone = document?.getString("phone")
+                    val address = document?.getString("address")
 
                     val updateFields = if (isHelper) {
                         mapOf(
@@ -114,6 +118,8 @@ class FirestoreDataSource : ViewModel() {
             }
     }
 
+    // FUNCION QUE OBTIENE TODAS LAS PETICIONES ACPETADAS
+
     fun getAcceptedRequest(
         db: FirebaseFirestore,
         auth: FirebaseAuth,
@@ -147,6 +153,8 @@ class FirestoreDataSource : ViewModel() {
                 }
             }
     }
+
+    // FUNCION QUE CMABIA LOS VALORES DE LA PETICION AL COMPLETARLA O CANCELARLA
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun actionAcceptedRequest(
@@ -212,6 +220,8 @@ class FirestoreDataSource : ViewModel() {
             }
     }
 
+    // FUNCION QUE OBTIENE LA ACTIVIDAD DEL USUARIO
+
     fun obtainActivity(
         auth: FirebaseAuth,
         db: FirebaseFirestore,
@@ -235,6 +245,8 @@ class FirestoreDataSource : ViewModel() {
             }
     }
 
+    // FUNCION QUE LIMITA LAS PETICIONES DEL USUARIO
+
     fun limitRequest(auth: FirebaseAuth, db: FirebaseFirestore, onResult: (Int) -> Unit) {
         val uid = auth.currentUser?.uid
         db.collection(Tables.requests).whereEqualTo("acceptedByUid", uid).get()
@@ -243,6 +255,8 @@ class FirestoreDataSource : ViewModel() {
             }
     }
 }
+
+// FUNCION QUE OBTIENE LAS ESTADISTICAS DEL USUARIO
 
 @RequiresApi(Build.VERSION_CODES.O)
 fun obtainUserStats(
@@ -276,6 +290,8 @@ fun obtainUserStats(
     }
 }
 
+// FUNCION QUE OBTIENE LA INFORMACION DEL USUARIO
+
 fun obtainUserInfo(auth: FirebaseAuth, db: FirebaseFirestore, onResult: (User) -> Unit) {
     val uid = auth.currentUser?.uid
     db.collection(Tables.users).whereEqualTo("uid", uid).get().addOnCompleteListener { task ->
@@ -296,6 +312,8 @@ fun obtainUserInfo(auth: FirebaseAuth, db: FirebaseFirestore, onResult: (User) -
         }
     }
 }
+
+// FUNCION QUE PERMITE CREAR UNA PETICION
 
 @RequiresApi(Build.VERSION_CODES.O)
 fun createRequest(
@@ -350,6 +368,8 @@ fun createRequest(
     }
 }
 
+// FUNCION QUE ACTUALIZA LOS DATOS DEL USUARIO
+
 fun updateInfo(
     auth: FirebaseAuth,
     db: FirebaseFirestore,
@@ -384,6 +404,8 @@ fun updateInfo(
         }
     }
 }
+
+// FUNCION QUE PERMITE BORRAR UNA CUENTA
 
 fun deleteAccount(
     auth: FirebaseAuth,
@@ -436,6 +458,8 @@ fun deleteAccount(
     }
 }
 
+// FUNCION QUE CREA LOS REGISTROS DEL USUARIO
+
 private fun createActivity(db: FirebaseFirestore, currentActivity: Activity) {
     db.collection(Tables.activity).add(currentActivity).addOnCompleteListener { activity ->
         if (activity.isSuccessful) {
@@ -443,6 +467,8 @@ private fun createActivity(db: FirebaseFirestore, currentActivity: Activity) {
         }
     }
 }
+
+// FUNCION QUE ACTUALIZA LAS ESTADISTICAS DEL USUARIO
 
 @RequiresApi(Build.VERSION_CODES.O)
 private fun updateStats(db: FirebaseFirestore, auth: FirebaseAuth, action: String) {
@@ -512,6 +538,8 @@ private fun updateStats(db: FirebaseFirestore, auth: FirebaseAuth, action: Strin
     }
 }
 
+// FUNCION QUE ACTUALIZA LA PUNTUACION DEL USUARIO
+
 fun updatePuntuationStars(db: FirebaseFirestore, uid: String, points: Int) {
     db.collection(Tables.stats).whereEqualTo("uid", uid).get().addOnCompleteListener { task ->
         if (task.isSuccessful) {
@@ -538,6 +566,8 @@ fun updatePuntuationStars(db: FirebaseFirestore, uid: String, points: Int) {
         }
     }
 }
+
+// FUNCION QUE CAMBIA LOS VALORES DE LA SEMANA DEL USUARIO A 0
 
 @RequiresApi(Build.VERSION_CODES.O)
 private fun setGraphicValues(db: FirebaseFirestore) {

@@ -1,5 +1,6 @@
 package com.lixferox.app_tfg_2024.presentation.screens
 
+import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
@@ -41,20 +42,25 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
 import com.lixferox.app_tfg_2024.common.callPhone
+import com.lixferox.app_tfg_2024.common.openMaps
 import com.lixferox.app_tfg_2024.data.datasource.FirestoreDataSource
 import com.lixferox.app_tfg_2024.data.datasource.updatePuntuationStars
 import com.lixferox.app_tfg_2024.data.model.Tables
 import com.lixferox.app_tfg_2024.model.Request
 import com.lixferox.app_tfg_2024.ui.components.Header
 import com.lixferox.app_tfg_2024.ui.components.NavBar
+import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Locale
+
+// VENTANA DE LAS TAREAS ACEPTADAS POR EL USUARIO
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -75,22 +81,22 @@ fun TasksListScreen(
         topBar = {
             Header(
                 modifier = Modifier.padding(paddingValues),
-                navigateToLogin,
-                navigateToSettings,
-                navigateToProfileInfo,
-                auth,
-                db
+                navigateToLogin = navigateToLogin,
+                navigateToSettings = navigateToSettings,
+                navigateToProfileInfo = navigateToProfileInfo,
+                auth = auth,
+                db = db
             )
         },
         bottomBar = {
             NavBar(
-                navigateToHome,
-                navigateToSearch,
-                navigateToTask,
-                navigateToStats,
-                3,
-                auth,
-                db
+                navigateToHome = navigateToHome,
+                navigateToSearch = navigateToSearch,
+                navigateToTasks = navigateToTask,
+                navigateToStats = navigateToStats,
+                indexBar = 3,
+                auth = auth,
+                db = db
             )
         }
     ) { innerpadding ->
@@ -103,13 +109,15 @@ fun TasksListScreen(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(horizontal = 16.dp),
-                auth,
-                db,
-                viewModel
+                auth = auth,
+                db = db,
+                viewModel = viewModel
             )
         }
     }
 }
+
+// COMPONENTE QUE IMPORTARA TODAS LAS SECCIONES A MOSTRAR
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -128,27 +136,36 @@ private fun Content(
             text = "Tareas aceptadas",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF2196F3)
+            color = Color(color = 0xFF2196F3)
         )
         Spacer(modifier = Modifier.height(16.dp))
-        ListRequest(auth, db, viewModel)
+        ListRequest(auth = auth, db = db, viewModel = viewModel)
     }
 }
+
+// COMPONENTE QUE MUESTRA LA LISTA DE PETICIONES ACEPTADAS DEL USUARIO
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: FirestoreDataSource) {
+    val user = auth.currentUser
+        ?: run {
+            return
+        }
+    val uid = user.uid
+
+
+    var isHelper by remember { mutableStateOf(false) }
+    var loading by remember { mutableStateOf(true) }
+    var listRequest by remember { mutableStateOf<List<Request>>(emptyList()) }
+
+
     val context = LocalContext.current
     var showModal by remember { mutableStateOf(false) }
     var showPuntuation by remember { mutableStateOf(false) }
-    var isHelper by remember { mutableStateOf<Boolean?>(null) }
     var textModal by remember { mutableStateOf("") }
-    var onAcceptAction by remember { mutableStateOf({}) }
-    var listRequest by remember { mutableStateOf<List<Request>>(emptyList()) }
-    var indexTask by remember { mutableStateOf<String?>(null) }
     var currentUid by remember { mutableStateOf("") }
-
-    val uid = auth.currentUser?.uid
+    var onAcceptAction by remember { mutableStateOf({}) }
 
     data class ItemMenu(
         val id: String,
@@ -163,21 +180,21 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
     )
 
     LaunchedEffect(uid) {
-        uid.let {
-            db.collection(Tables.users).whereEqualTo("uid", uid).get()
-                .addOnCompleteListener { task ->
-                    val currentUser = task.result.documents.firstOrNull()
-                    if (currentUser != null) {
-                        isHelper = currentUser.getBoolean("helper") ?: false
-                        viewModel.getAcceptedRequest(db, auth) { requests ->
-                            listRequest = requests
-                        }
-                    }
-                }
+        val snap = db.collection(Tables.users)
+            .whereEqualTo("uid", uid)
+            .get()
+            .await()
+        isHelper = snap.documents
+            .firstOrNull()
+            ?.getBoolean("helper")
+            ?: false
+        viewModel.getAcceptedRequest(db = db, auth = auth) { request ->
+            listRequest = request
+            loading = false
         }
     }
 
-    if (isHelper == null) {
+    if (loading) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
@@ -201,9 +218,9 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
             address = if (isHelper == true) task.olderAddress
                 ?: "Usuario desconocido" else task.helperAddress ?: "Desconocida",
             date = dateTask,
-            phone = if (isHelper == true) task.olderPhone else task.helperPhone,
-            isHelper = isHelper!!,
-            uid = if (isHelper == true) task.uidOlder!! else task.uidHelper!!
+            phone = if (isHelper) task.olderPhone else task.helperPhone,
+            isHelper = isHelper,
+            uid = if (isHelper) task.uidOlder ?: "Desconocido" else task.uidHelper ?: "Desconocido"
         )
     }
 
@@ -252,6 +269,7 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
                                 text = item.date,
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Medium,
+                                textAlign = TextAlign.End,
                                 modifier = Modifier.padding(start = 8.dp),
                                 color = Color.Gray
                             )
@@ -316,13 +334,12 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
                                     showModal = true
                                     textModal = "Completar"
                                     onAcceptAction = {
-                                        indexTask = item.id
                                         viewModel.actionAcceptedRequest(
-                                            indexTask!!,
-                                            "complete",
-                                            item.isHelper,
-                                            db,
-                                            auth
+                                            index = item.id,
+                                            action = "complete",
+                                            isHelper = item.isHelper,
+                                            db = db,
+                                            auth = auth
                                         )
                                         showModal = false
                                     }
@@ -330,7 +347,7 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
                                 },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color(
-                                        0xFF4CAF50
+                                        color = 0xFF4CAF50
                                     )
                                 ),
                             ) {
@@ -346,13 +363,12 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
                                     showModal = true
                                     textModal = "Cancelar"
                                     onAcceptAction = {
-                                        indexTask = item.id
                                         viewModel.actionAcceptedRequest(
-                                            indexTask!!,
-                                            "cancel",
-                                            item.isHelper,
-                                            db,
-                                            auth
+                                            index = item.id,
+                                            action = "cancel",
+                                            isHelper = item.isHelper,
+                                            db = db,
+                                            auth = auth
                                         )
                                         showModal = false
                                     }
@@ -360,12 +376,32 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
                                 },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color(
-                                        0xFFF44336
+                                        color = 0xFFF44336
                                     )
                                 ),
                             ) {
                                 Text(
                                     text = "Cancelar",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp)
+                        ) {
+                            Button(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    callPhone(context = context, phone = item.phone)
+                                }, colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(color = 0xFF2196F3)
+                                )
+                            ) {
+                                Text(
+                                    text = "Llamar",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                 )
@@ -374,18 +410,17 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 4.dp)
                         ) {
                             Button(
                                 modifier = Modifier.fillMaxWidth(),
                                 onClick = {
-                                    callPhone(context, item.phone)
+                                    openMaps(context = context, ubication = item.address)
                                 }, colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF2196F3)
+                                    containerColor = Color(color = 0xFF009688)
                                 )
                             ) {
                                 Text(
-                                    "Llamar",
+                                    text = "Ubicación",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                 )
@@ -401,15 +436,17 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
         AlertRequest(onDismiss = { showModal = false }, onAccept = {
             onAcceptAction()
             showPuntuation = true
-        }, textModal)
+        }, textModal = textModal)
     }
     if (showPuntuation) {
         AlertStartPuntuation(onAccept = { points ->
             showPuntuation = false
-            updatePuntuationStars(db, currentUid, points)
+            updatePuntuationStars(db = db, uid = currentUid, points = points)
         }, onDismiss = { showPuntuation = false })
     }
 }
+
+// COMPONENTE QUE MUESTRA UNA ALERTA EN CASO DE COMPLETAR O CANCELAR LA TAREA
 
 @Composable
 private fun AlertRequest(onDismiss: () -> Unit, onAccept: () -> Unit, textModal: String) {
@@ -466,7 +503,8 @@ private fun AlertStartPuntuation(onAccept: (Int) -> Unit, onDismiss: () -> Unit)
                                 .size(36.dp)
                                 .clickable {
                                     puntuation = i
-                                }, tint = if (i <= puntuation) Color(0xFFFFC107) else Color.Gray
+                                },
+                            tint = if (i <= puntuation) Color(color = 0xFFFFC107) else Color.Gray
                         )
                     }
                 }

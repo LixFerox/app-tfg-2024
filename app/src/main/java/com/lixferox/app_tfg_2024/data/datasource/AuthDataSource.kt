@@ -33,7 +33,7 @@ fun loginFirebase(
     }
 }
 
-//CREAR CUENTA
+// METODO QUE CREA UNA CUENTA NUEVA EN LA BASE DE DATOS
 
 fun createAccountFirebase(
     onSuccess: () -> Unit,
@@ -60,8 +60,12 @@ fun createAccountFirebase(
     }
 
     auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener { task ->
-        val uid = auth.currentUser?.uid.toString()
+        val uid = auth.currentUser?.uid
         if (task.isSuccessful) {
+            if (uid == null) {
+                onError(task.exception?.message ?: "No se puedo obtener el usuario")
+                return@addOnCompleteListener
+            }
             val currentDate = Timestamp.now()
             val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
             val convertBirth = format.parse(birth)
@@ -93,10 +97,15 @@ fun createAccountFirebase(
                         onSuccess()
                     }
                 }
-                Toast.makeText(context, "¡Se ha creado la cuenta correctamente!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    "¡Se ha creado la cuenta correctamente!",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         } else {
             onError(task.exception?.message ?: "Error desconocido al crear la cuenta")
+            return@addOnCompleteListener
         }
     }
 }
