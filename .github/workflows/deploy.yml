@@ -29,6 +29,10 @@ jobs:
       - name: Add Permissions
         run: chmod +x ./gradlew
 
+      - name: Inyectar google‑services.json
+        run: |
+          echo "${{ secrets.FIREBASE_JSON }}" > app/google-services.json
+
       - name: Build app
         run: ./gradlew build
 
