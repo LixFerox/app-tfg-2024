@@ -1,6 +1,8 @@
 package com.lixferox.app_tfg_2024.presentation.screens
 
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +33,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -62,6 +65,7 @@ import ir.ehsannarmani.compose_charts.models.HorizontalIndicatorProperties
 import ir.ehsannarmani.compose_charts.models.Line
 import java.util.Date
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ProfileInfoScreen(
     paddingValues: PaddingValues,
@@ -113,6 +117,7 @@ fun ProfileInfoScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun ProfileData(
     modifier: Modifier = Modifier,
@@ -143,7 +148,7 @@ private fun ProfileData(
 
     val username by remember { mutableStateOf(currentUser!!.username) }
     val level by remember { mutableIntStateOf(currentStats!!.level) }
-    val puntuation by remember { mutableIntStateOf(currentStats!!.puntuation) }
+    val puntuation by remember { mutableDoubleStateOf(currentStats!!.puntuation) }
     val levelBar by remember { mutableIntStateOf(currentStats!!.points) }
     val totalRequests by remember { mutableIntStateOf(currentStats!!.totalCompletedTasks) }
     val joinedIn by remember { mutableStateOf(currentStats!!.joinedIn) }
@@ -159,7 +164,7 @@ private fun ProfileData(
         var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
         UserHeader(username, level)
-        LevelBar(levelBar)
+        LevelBar(levelBar, 0.5f)
         Spacer(Modifier.height(8.dp))
         StatsSection(puntuation, totalRequests)
         Spacer(Modifier.height(8.dp))
@@ -227,13 +232,13 @@ private fun UserHeader(username: String, level: Int) {
 }
 
 @Composable
-private fun LevelBar(levelBar: Int) {
+fun LevelBar(levelBar: Int, fraction: Float) {
     val points by remember { mutableFloatStateOf(levelBar.toFloat()) }
 
     LinearProgressIndicator(
         progress = { points / 500f },
         modifier = Modifier
-            .fillMaxWidth(0.5f)
+            .fillMaxWidth(fraction)
             .height(8.dp),
         color = Color(0xFF4CAF50),
         trackColor = Color.LightGray,
@@ -241,7 +246,7 @@ private fun LevelBar(levelBar: Int) {
 }
 
 @Composable
-private fun StatsSection(puntuation: Int, totalRequests: Int) {
+private fun StatsSection(puntuation: Double, totalRequests: Int) {
 
     data class ItemMenu(
         val title: String,
@@ -252,7 +257,7 @@ private fun StatsSection(puntuation: Int, totalRequests: Int) {
 
     val listItems = listOf(
         ItemMenu(
-            title = "$puntuation/5",
+            title = if (puntuation == 0.0) "0/5" else "$puntuation/5",
             data = "Puntuación",
             R.drawable.points,
             Color(0xFFFFC107)

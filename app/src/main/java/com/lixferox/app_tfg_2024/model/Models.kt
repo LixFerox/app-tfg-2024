@@ -37,10 +37,11 @@ data class Stats(
     val uid: String,
     val level: Int,
     val points: Int,
+    val ratingPoints: Long,
     val totalCompletedTasks: Int,
     val weekCompletedTasks: List<Double>,
     val tasksInProgress: Int,
-    val puntuation: Int,
+    val puntuation: Double,
     val joinedIn: Timestamp,
     val resetWeekValues : Boolean
 )

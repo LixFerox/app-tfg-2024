@@ -84,7 +84,8 @@ fun createAccountFirebase(
                         totalCompletedTasks = 0,
                         weekCompletedTasks = listTasksWeek,
                         tasksInProgress = 0,
-                        puntuation = 0,
+                        puntuation = 0.0,
+                        ratingPoints = 0L,
                         joinedIn = currentDate,
                         resetWeekValues = false
                     )

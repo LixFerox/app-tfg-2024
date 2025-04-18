@@ -19,6 +19,7 @@ import com.lixferox.app_tfg_2024.model.User
 import java.text.SimpleDateFormat
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalTime
 import java.util.Locale
 
 class FirestoreDataSource : ViewModel() {
@@ -160,25 +161,27 @@ class FirestoreDataSource : ViewModel() {
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val updateFields = mutableMapOf<String, Any>().apply {
-                        if (action == "cancel") {
-                            this["acceptedByUid"] = ""
-                        } else {
-                            this["status"] = "Completada"
-                        }
+                        when (action) {
+                            "cancel" -> {
+                                this["acceptedByUid"] = ""
+                                if (isHelper) {
+                                    put("helperAddress", "")
+                                    put("helperPhone", "")
+                                    put("helperUsername", "")
+                                    put("uidHelper", "")
+                                } else {
+                                    put("olderAddress", "")
+                                    put("olderPhone", "")
+                                    put("olderUsername", "")
+                                    put("uidOlder", "")
+                                }
+                            }
 
-                        if (isHelper) {
-                            this["helperAddress"] = ""
-                            this["helperPhone"] = ""
-                            this["helperUsername"] = ""
-                            this["uidHelper"] = ""
-                        } else {
-                            this["olderAddress"] = ""
-                            this["olderPhone"] = ""
-                            this["olderUsername"] = ""
-                            this["uidOlder"] = ""
+                            "complete" -> {
+                                this["status"] = "Completada"
+                            }
                         }
                     }
-
                     db.collection(Tables.requests).whereEqualTo("id", index).get()
                         .addOnSuccessListener { request ->
                             if (!request.isEmpty) {
@@ -241,11 +244,13 @@ class FirestoreDataSource : ViewModel() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 fun obtainUserStats(
     auth: FirebaseAuth,
     db: FirebaseFirestore,
     onResult: (Stats) -> Unit
 ) {
+    setGraphicValues(db)
     val uid = auth.currentUser?.uid
     db.collection(Tables.stats).whereEqualTo("uid", uid).get().addOnCompleteListener { task ->
         if (task.isSuccessful) {
@@ -259,7 +264,8 @@ fun obtainUserStats(
                     points = document.getLong("points")?.toInt() ?: 0,
                     totalCompletedTasks = document.getLong("totalCompletedTasks")?.toInt() ?: 0,
                     tasksInProgress = document.getLong("tasksInProgress")?.toInt() ?: 0,
-                    puntuation = document.getLong("puntuation")?.toInt() ?: 0,
+                    puntuation = document.getDouble("puntuation") ?: 0.0,
+                    ratingPoints = document.getLong("ratingPoints") ?: 0L,
                     joinedIn = document.getTimestamp("joinedIn") ?: Timestamp.now(),
                     weekCompletedTasks = weekCompletedTasks,
                     resetWeekValues = document.getBoolean("resetWeekValues") ?: false
@@ -452,7 +458,6 @@ private fun updateStats(db: FirebaseFirestore, auth: FirebaseAuth, action: Strin
         DayOfWeek.SUNDAY -> 6
     }
 
-
     val updateFields = when {
         action == "createTask" -> mapOf("points" to FieldValue.increment(500))
         action == "acceptTask" -> mapOf(
@@ -503,6 +508,65 @@ private fun updateStats(db: FirebaseFirestore, auth: FirebaseAuth, action: Strin
                     }
                 }
             }
+        }
+    }
+}
+
+fun updatePuntuationStars(db: FirebaseFirestore, uid: String, points: Int) {
+    db.collection(Tables.stats).whereEqualTo("uid", uid).get().addOnCompleteListener { task ->
+        if (task.isSuccessful) {
+            val document = task.result.documents.firstOrNull()
+            if (document != null) {
+
+                val currentRating = document.getLong("ratingPoints") ?: 0L
+                val currentPoints = document.getDouble("puntuation") ?: 0.0
+
+                val newRating = currentRating + 1
+                val newPuntuation = currentPoints + (points - currentRating) / newRating
+
+                val updateFields = mapOf(
+                    ("ratingPoints" to newRating),
+                    ("puntuation" to newPuntuation)
+                )
+
+                document.reference.update(updateFields).addOnCompleteListener { update ->
+                    if (update.isSuccessful) {
+                        Log.i("updatePoints", "Se han actualizado la puntiación")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+private fun setGraphicValues(db: FirebaseFirestore) {
+    val date = LocalDate.now()
+    val isMonday = date.dayOfWeek == DayOfWeek.MONDAY
+
+    db.collection(Tables.stats).get().addOnSuccessListener { task ->
+        val document = task.documents
+        document.chunked(500).forEach { update ->
+            val data = db.batch()
+            update.forEach { document ->
+                val resetFlag = document.getBoolean("resetWeekValues") ?: false
+                when {
+                    isMonday && !resetFlag -> {
+                        data.update(
+                            document.reference, mapOf(
+                                "weekCompletedTasks" to List(8) { 0 },
+                                "resetWeekValues" to true
+                            )
+                        )
+                    }
+
+                    !isMonday && resetFlag -> {
+                        data.update(document.reference, "resetWeekValues", false)
+                    }
+                }
+
+            }
+            data.commit()
         }
     }
 }

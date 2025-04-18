@@ -2,6 +2,7 @@ package com.lixferox.app_tfg_2024.presentation.screens
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +31,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,6 +48,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
 import com.lixferox.app_tfg_2024.common.callPhone
 import com.lixferox.app_tfg_2024.data.datasource.FirestoreDataSource
+import com.lixferox.app_tfg_2024.data.datasource.updatePuntuationStars
 import com.lixferox.app_tfg_2024.data.model.Tables
 import com.lixferox.app_tfg_2024.model.Request
 import com.lixferox.app_tfg_2024.ui.components.Header
@@ -137,11 +140,13 @@ private fun Content(
 private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: FirestoreDataSource) {
     val context = LocalContext.current
     var showModal by remember { mutableStateOf(false) }
+    var showPuntuation by remember { mutableStateOf(false) }
     var isHelper by remember { mutableStateOf<Boolean?>(null) }
     var textModal by remember { mutableStateOf("") }
     var onAcceptAction by remember { mutableStateOf({}) }
     var listRequest by remember { mutableStateOf<List<Request>>(emptyList()) }
     var indexTask by remember { mutableStateOf<String?>(null) }
+    var currentUid by remember { mutableStateOf("") }
 
     val uid = auth.currentUser?.uid
 
@@ -153,7 +158,8 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
         val address: String,
         val date: String,
         val phone: String,
-        val isHelper: Boolean
+        val isHelper: Boolean,
+        val uid: String
     )
 
     LaunchedEffect(uid) {
@@ -196,7 +202,8 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
                 ?: "Usuario desconocido" else task.helperAddress ?: "Desconocida",
             date = dateTask,
             phone = if (isHelper == true) task.olderPhone else task.helperPhone,
-            isHelper = isHelper!!
+            isHelper = isHelper!!,
+            uid = if (isHelper == true) task.uidOlder!! else task.uidHelper!!
         )
     }
 
@@ -319,6 +326,7 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
                                         )
                                         showModal = false
                                     }
+                                    currentUid = item.uid
                                 },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color(
@@ -348,6 +356,7 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
                                         )
                                         showModal = false
                                     }
+                                    currentUid = item.uid
                                 },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color(
@@ -389,7 +398,16 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
         }
     }
     if (showModal) {
-        AlertRequest(onDismiss = { showModal = false }, onAccept = onAcceptAction, textModal)
+        AlertRequest(onDismiss = { showModal = false }, onAccept = {
+            onAcceptAction()
+            showPuntuation = true
+        }, textModal)
+    }
+    if (showPuntuation) {
+        AlertStartPuntuation(onAccept = { points ->
+            showPuntuation = false
+            updatePuntuationStars(db, currentUid, points)
+        }, onDismiss = { showPuntuation = false })
     }
 }
 
@@ -412,4 +430,47 @@ private fun AlertRequest(onDismiss: () -> Unit, onAccept: () -> Unit, textModal:
                 Text(text = "¿Estás seguro que quieres ${textModal.uppercase()} la tarea?")
             }
         })
+}
+
+@Composable
+private fun AlertStartPuntuation(onAccept: (Int) -> Unit, onDismiss: () -> Unit) {
+    var puntuation by remember { mutableIntStateOf(0) }
+
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        confirmButton = {
+            TextButton(onClick = {
+                onAccept(puntuation)
+                println("Ha pulsado $puntuation")
+            }) { Text(text = "Aceptar") }
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Puntuar usuario",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    for (i in 1..5) {
+                        Icon(
+                            painter = painterResource(R.drawable.points),
+                            contentDescription = "Icono de la estrella $i",
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clickable {
+                                    puntuation = i
+                                }, tint = if (i <= puntuation) Color(0xFFFFC107) else Color.Gray
+                        )
+                    }
+                }
+            }
+        }
+    )
 }

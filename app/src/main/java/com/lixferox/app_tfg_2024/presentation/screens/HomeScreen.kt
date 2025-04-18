@@ -58,6 +58,7 @@ import com.lixferox.app_tfg_2024.data.datasource.obtainUserStats
 import com.lixferox.app_tfg_2024.model.Activity
 import com.lixferox.app_tfg_2024.model.Stats
 import com.lixferox.app_tfg_2024.model.User
+import kotlinx.coroutines.delay
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -175,12 +176,19 @@ private fun Content(
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun WelcomeSection(username: String) {
-    val currentDateTime = LocalDateTime.now()
+    val currentDateTime = remember { mutableStateOf(LocalDateTime.now()) }
+    LaunchedEffect(Unit) {
+        while (true){
+            delay(1_000L)
+            currentDateTime.value=LocalDateTime.now()
+        }
+    }
+
     val locale = Locale("es", "ES")
     val dateFormatter = DateTimeFormatter.ofPattern("EEEE, dd 'de' MMMM", locale)
     val timeFormatter = DateTimeFormatter.ofPattern("hh:mm a", locale)
-    val formattedDate = currentDateTime.format(dateFormatter)
-    val formattedTime = currentDateTime.format(timeFormatter)
+    val formattedDate = currentDateTime.value.format(dateFormatter)
+    val formattedTime = currentDateTime.value.format(timeFormatter)
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row {

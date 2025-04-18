@@ -1,33 +1,64 @@
 package com.lixferox.app_tfg_2024.presentation.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.lixferox.app_tfg_2024.R
+import com.lixferox.app_tfg_2024.data.datasource.obtainUserInfo
+import com.lixferox.app_tfg_2024.data.datasource.obtainUserStats
+import com.lixferox.app_tfg_2024.model.Stats
+import com.lixferox.app_tfg_2024.model.User
 import com.lixferox.app_tfg_2024.ui.components.Header
 import com.lixferox.app_tfg_2024.ui.components.NavBar
+import ir.ehsannarmani.compose_charts.LineChart
+import ir.ehsannarmani.compose_charts.models.HorizontalIndicatorProperties
+import ir.ehsannarmani.compose_charts.models.Line
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun StatsProfileScreen(
     paddingValues: PaddingValues,
@@ -71,14 +102,15 @@ fun StatsProfileScreen(
         ) {
             Content(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
+                    .align(Alignment.TopCenter), auth, db
             )
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-private fun Content(modifier: Modifier = Modifier) {
+private fun Content(modifier: Modifier = Modifier, auth: FirebaseAuth, db: FirebaseFirestore) {
     Column(
         modifier = modifier
             .fillMaxSize(),
@@ -91,33 +123,65 @@ private fun Content(modifier: Modifier = Modifier) {
             color = Color(0xFF2196F3)
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Graphic(
+        InfoStats(
             modifier
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState()),
+            auth, db
         )
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-private fun Graphic(modifier: Modifier = Modifier) {
+private fun InfoStats(modifier: Modifier = Modifier, auth: FirebaseAuth, db: FirebaseFirestore) {
+    var currentStats by remember { mutableStateOf<Stats?>(null) }
+    var currentUser by remember { mutableStateOf<User?>(null) }
+
+    LaunchedEffect(auth.currentUser) {
+        obtainUserStats(auth, db) { obtainedStats ->
+            currentStats = obtainedStats
+        }
+        obtainUserInfo(auth, db) { obtainedUser ->
+            currentUser = obtainedUser
+        }
+    }
+    if (currentUser == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    val acceptedTasks by remember { mutableIntStateOf(currentStats!!.totalCompletedTasks) }
+    val totalWeekCompleted = currentStats!!.weekCompletedTasks.sum().toInt()
+    val userLevel by remember { mutableIntStateOf(currentStats!!.level) }
+    val userPoints by remember { mutableIntStateOf(currentStats!!.points) }
+    val listTasksWeek by remember { mutableStateOf(currentStats?.weekCompletedTasks) }
+
+
     data class ItemStats(
         val title: String,
-        val value: String
+        val icon: Int,
+        val value: String,
+        val color: Color
     )
 
     val listItems = listOf(
         ItemStats(
             title = "Solicitudes Aceptadas",
-            value = "150"
-        ),
-        ItemStats(
-            title = "Tiempo Promedio de Completada",
-            value = "2h"
+            icon = R.drawable.trending,
+            value = "$acceptedTasks",
+            color = Color(0xFF2196F3)
         ),
         ItemStats(
             title = "Solicitudes por Semana",
-            value = "43"
+            icon = R.drawable.clock,
+            value = "$totalWeekCompleted",
+            color = Color(0xFFFFC107)
         )
     )
 
@@ -128,93 +192,142 @@ private fun Graphic(modifier: Modifier = Modifier) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Max),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Análisis y estadísticas",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.DarkGray
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                listItems.map { item ->
-                    Row(
+            listItems.map { item ->
+                Card(
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 8.dp)
+                ) {
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .fillMaxHeight()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(item.icon),
+                                contentDescription = "Icono de la sección ${item.title}",
+                                tint = item.color
+                            )
+                        }
                         Text(
                             text = item.title,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center
                         )
                         Text(
                             text = item.value,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Normal,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
             }
         }
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-        ) {
+        Card(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Nivel de usuario",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.DarkGray
-                )
-                Spacer(modifier = Modifier.height(8.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Nivel",
-                        style = MaterialTheme.typography.titleMedium,
+                        text = "Nivel de usuario",
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
+                        color = Color.DarkGray
                     )
-                    Text(text = "3")
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(Color(0xFFFFC107), shape = CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "$userLevel",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
                         text = "Puntos acumulados",
                         style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Text(
+                        text = "$userPoints/500",
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
-                    Text(text = "1200")
                 }
+                LevelBar(userPoints, 1f)
             }
         }
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-        ) {
+        Card(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Ubicación de solicitudes",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.DarkGray
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    Text(
+                        text = "Tendencias semanales",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.DarkGray
+                    )
+                }
                 Spacer(modifier = Modifier.height(8.dp))
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(150.dp)
-                        .background(Color.LightGray),
-                    contentAlignment = Alignment.Center
+                        .height(100.dp)
                 ) {
-                    Text(text = "")
+                    LineChart(
+                        data = remember {
+                            listOf(
+                                Line(
+                                    label = "Tareas",
+                                    values = listTasksWeek!!,
+                                    color = Brush.radialGradient(
+                                        colors = listOf(Color(0xFF00BCD4), Color(0xFF00BCD4))
+                                    )
+                                )
+                            )
+                        },
+                        indicatorProperties = HorizontalIndicatorProperties(
+                            textStyle = TextStyle.Default.copy(
+                                color = Color.Transparent,
+                                fontSize = 0.sp
+                            ),
+                        ),
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
             }
         }
