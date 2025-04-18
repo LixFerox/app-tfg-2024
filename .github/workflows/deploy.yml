@@ -58,7 +58,7 @@ jobs:
 
             ### 📥 Instalación
             1. Descarga el APK:
-               `ProjectName-${{ env.VERSION_NAME }}.apk`
+               `vitalist-${{ env.VERSION_NAME }}.apk`
             2. Activa “Instalar desde orígenes desconocidos” en Ajustes → Seguridad.
 
             ---
