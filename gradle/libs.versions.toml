@@ -17,6 +17,8 @@ services = "4.4.2"
 crashlytics = "3.0.2"
 # DIAGRAMAS
 composeCharts = "0.1.2"
+# IMAGES
+coil = "3.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -40,11 +42,13 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "fireBaseBom" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
 # FIREBASE
-firebase-auth = { module = "com.google.firebase:firebase-auth-ktx"}
+firebase-auth = { module = "com.google.firebase:firebase-auth-ktx" }
 # FIRESTORE
-firebase-firestore = {module = "com.google.firebase:firebase-firestore" }
+firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
 # DIAGRAMAS
 compose-charts = { module = "io.github.ehsannarmani:compose-charts", version.ref = "composeCharts" }
+# IMAGENES
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

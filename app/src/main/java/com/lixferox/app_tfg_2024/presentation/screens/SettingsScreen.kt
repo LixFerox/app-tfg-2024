@@ -1,5 +1,6 @@
 package com.lixferox.app_tfg_2024.presentation.screens
 
+import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
@@ -39,11 +40,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.lixferox.app_tfg_2024.common.UploadImage
+import com.lixferox.app_tfg_2024.common.parseImage
+import com.lixferox.app_tfg_2024.data.datasource.FirestoreDataSource
 import com.lixferox.app_tfg_2024.data.datasource.obtainUserInfo
 import com.lixferox.app_tfg_2024.data.datasource.updateInfo
 import com.lixferox.app_tfg_2024.model.User
@@ -67,7 +73,8 @@ fun SettingsScreen(
     navigateToTask: () -> Unit,
     navigateToStats: () -> Unit,
     auth: FirebaseAuth,
-    db: FirebaseFirestore
+    db: FirebaseFirestore,
+    viewModel: FirestoreDataSource
 ) {
     Scaffold(
         topBar = {
@@ -88,7 +95,8 @@ fun SettingsScreen(
                 navigateToStats = navigateToStats,
                 indexBar = 0,
                 auth = auth,
-                db = db
+                db = db,
+                viewModel = viewModel
             )
         }
     ) { innerpadding ->
@@ -111,6 +119,7 @@ fun SettingsScreen(
 
 @Composable
 private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: FirebaseFirestore) {
+    val context = LocalContext.current
     var showModal by remember { mutableStateOf(false) }
 
     var currentUser by remember { mutableStateOf<User?>(null) }
@@ -131,14 +140,25 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
     }
 
     val user = requireNotNull(currentUser)
-
     val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     val birthCovert = format.format(user.birth.toDate()).toString()
     var pickerIsVisible by remember { mutableStateOf(false) }
 
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var image by remember { mutableStateOf(user.image) }
+
+    LaunchedEffect(imageUri) {
+        imageUri?.let { uri ->
+            parseImage(context, uri).let { parse ->
+                image = parse
+            }
+        }
+    }
+
     var email by remember { mutableStateOf(user.email) }
     var username by remember { mutableStateOf(user.username) }
     var phone by remember { mutableStateOf(user.phone) }
+    var dni by remember { mutableStateOf(user.dni) }
     var birth by remember { mutableStateOf(birthCovert) }
     var address by remember { mutableStateOf(user.address) }
 
@@ -154,6 +174,9 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
             fontWeight = FontWeight.Bold,
             color = Color(color = 0xFF2196F3)
         )
+        UploadImage(image) { picture ->
+            imageUri = picture
+        }
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
@@ -163,6 +186,10 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color(color = 0xFF2196F3),
                 unfocusedBorderColor = Color.LightGray
+            ),
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
             ),
             singleLine = true
         )
@@ -190,9 +217,11 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
                 focusedBorderColor = Color(color = 0xFF2196F3),
                 unfocusedBorderColor = Color.LightGray
             ),
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Phone,
+                imeAction = ImeAction.Next
+            ),
             singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
-
         )
         Spacer(Modifier.height(8.dp))
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -230,6 +259,21 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
             singleLine = true
         )
         Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = dni,
+            onValueChange = { dni = it },
+            label = { Text(text = "DNI") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color(color = 0xFF2196F3),
+                unfocusedBorderColor = Color.LightGray
+            ),
+            enabled = false,
+            readOnly = true,
+            singleLine = true,
+        )
+        Spacer(Modifier.height(8.dp))
         Button(
             onClick = { showModal = true },
             modifier = Modifier
@@ -255,7 +299,9 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
                 username = username,
                 phone = phone,
                 birth = birth,
-                address = address
+                address = address,
+                dni = dni,
+                image = image
             )
         })
     }

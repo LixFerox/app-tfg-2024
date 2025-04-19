@@ -1,6 +1,7 @@
 package com.lixferox.app_tfg_2024.presentation.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -36,6 +38,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -108,6 +112,7 @@ private fun Form(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
+    var resetPassword by remember { mutableStateOf(false) }
 
     Card(
         modifier = modifier
@@ -138,6 +143,10 @@ private fun Form(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(color = 0xFF2196F3),
                     unfocusedBorderColor = Color.LightGray
+                ),
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
                 ),
                 singleLine = true
             )
@@ -170,7 +179,14 @@ private fun Form(
                 },
                 singleLine = true
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "¿Has olvidado tu contraseña?",
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(color = 0xFF2196F3), modifier = Modifier.clickable {
+                    resetPassword = true
+                }
+            )
             Button(
                 onClick = {
                     loginFirebase(
@@ -212,6 +228,12 @@ private fun Form(
             }
         })
     }
+    if (resetPassword) {
+        ResetPassword(
+            auth,
+            onDismiss = { resetPassword = false },
+            onAccept = { resetPassword = false })
+    }
 }
 
 // COMPONENTE QUE MOVERA AL USUARIO A LA VENTANA DE CREAR CUENTA EN CASO DE NO TENER UNA
@@ -242,4 +264,50 @@ private fun SignIn(modifier: Modifier = Modifier, navigateToSignUp: () -> Unit) 
             }
         }
     }
+}
+
+//  COMPONENTE QUE PERMITE CAMBIAR LA CONTRASEÑA DEL USUARIO
+
+@Composable
+private fun ResetPassword(auth: FirebaseAuth, onDismiss: () -> Unit, onAccept: () -> Unit) {
+    var email by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        dismissButton = { TextButton(onClick = { onDismiss() }) { Text(text = "Cancelar") } },
+        confirmButton = {
+            TextButton(onClick = {
+                if (email.isNotEmpty()) {
+                    auth.sendPasswordResetEmail(email)
+                    onAccept()
+                }
+            }) { Text(text = "Aceptar") }
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Cambiar contraseña",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text(text = "Email") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(color = 0xFF2196F3),
+                        unfocusedBorderColor = Color.LightGray
+                    ),
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Next
+                    ),
+                    singleLine = true
+                )
+            }
+        })
 }

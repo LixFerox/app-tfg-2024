@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -46,6 +47,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -53,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
+import com.lixferox.app_tfg_2024.common.verificationEmail
 import com.lixferox.app_tfg_2024.data.datasource.createAccountFirebase
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -121,6 +125,7 @@ private fun Form(navigateToLogin: () -> Unit, auth: FirebaseAuth, db: FirebaseFi
     var isAssistant by rememberSaveable { mutableStateOf(false) }
     var address by rememberSaveable { mutableStateOf("") }
     var phone by rememberSaveable { mutableStateOf("") }
+    var dni by rememberSaveable { mutableStateOf("") }
     var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
 
     Card(
@@ -148,12 +153,27 @@ private fun Form(navigateToLogin: () -> Unit, auth: FirebaseAuth, db: FirebaseFi
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(color = 0xFF2196F3),
                 ),
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                ),
                 singleLine = true
             )
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
                 label = { Text(text = "Nombre de usuario") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(color = 0xFF2196F3),
+                ),
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = dni,
+                onValueChange = { dni = it },
+                label = { Text(text = "DNI") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -211,6 +231,10 @@ private fun Form(navigateToLogin: () -> Unit, auth: FirebaseAuth, db: FirebaseFi
                 },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(color = 0xFF2196F3),
+                ),
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    keyboardType = KeyboardType.Phone,
+                    imeAction = ImeAction.Next
                 ),
                 singleLine = true
             )
@@ -273,7 +297,10 @@ private fun Form(navigateToLogin: () -> Unit, auth: FirebaseAuth, db: FirebaseFi
             Button(
                 onClick = {
                     createAccountFirebase(
-                        onSuccess = { navigateToLogin() },
+                        onSuccess = {
+                            navigateToLogin()
+                            verificationEmail(auth)
+                        },
                         onError = { message -> errorMessage = message },
                         auth = auth,
                         db = db,
@@ -285,6 +312,7 @@ private fun Form(navigateToLogin: () -> Unit, auth: FirebaseAuth, db: FirebaseFi
                         isHelper = isAssistant,
                         address = address,
                         phone = phone,
+                        dni = dni,
                         context = context
                     )
                 },

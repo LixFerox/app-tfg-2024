@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
+import com.lixferox.app_tfg_2024.data.datasource.FirestoreDataSource
 import com.lixferox.app_tfg_2024.data.datasource.createRequest
 import com.lixferox.app_tfg_2024.data.model.Tables
 import kotlinx.coroutines.tasks.await
@@ -54,7 +55,8 @@ fun NavBar(
     navigateToStats: () -> Unit,
     indexBar: Int,
     auth: FirebaseAuth,
-    db: FirebaseFirestore
+    db: FirebaseFirestore,
+    viewModel: FirestoreDataSource
 ) {
     var showCreateRequest by remember { mutableStateOf(false) }
 
@@ -96,7 +98,12 @@ fun NavBar(
         }
     }
     if (showCreateRequest) {
-        FormRequest(onDismiss = { showCreateRequest = false }, auth = auth, db = db)
+        FormRequest(
+            onDismiss = { showCreateRequest = false },
+            auth = auth,
+            db = db,
+            viewModel = viewModel
+        )
     }
 }
 
@@ -105,7 +112,14 @@ fun NavBar(
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FormRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: FirebaseFirestore) {
+private fun FormRequest(
+    onDismiss: () -> Unit,
+    auth: FirebaseAuth,
+    db: FirebaseFirestore,
+    viewModel: FirestoreDataSource,
+) {
+    var showLimit by remember { mutableStateOf(false) }
+
     val user = auth.currentUser
         ?: run {
             onDismiss()
@@ -148,17 +162,22 @@ private fun FormRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: FirebaseF
         onDismissRequest = { onDismiss() },
         confirmButton = {
             TextButton(onClick = {
-                createRequest(
-                    title = title,
-                    description = description,
-                    urgency = urgency,
-                    isHelper = isHelper,
-                    uid = uid,
-                    db = db,
-                    auth = auth,
-                    onDismiss
-                )
-                onDismiss()
+                viewModel.limitCreated(auth = auth, db = db) { limit ->
+                    if (limit == 3) {
+                        showLimit = true
+                    } else {
+                        createRequest(
+                            title = title,
+                            description = description,
+                            urgency = urgency,
+                            isHelper = isHelper,
+                            uid = uid,
+                            db = db,
+                            auth = auth,
+                            onDismiss
+                        )
+                    }
+                }
             }) { Text(text = "Crear") }
         },
         dismissButton = { TextButton(onClick = { onDismiss() }) { Text(text = "Cancelar") } },
@@ -242,4 +261,32 @@ private fun FormRequest(onDismiss: () -> Unit, auth: FirebaseAuth, db: FirebaseF
             }
         }
     )
+    if (showLimit) {
+        LimitRequest(onDismiss = {
+            onDismiss()
+            showLimit = false
+        })
+    }
+}
+
+// COMPONENTE QUE LIMITA LAS PETICIONES DEL USUARIO
+
+@Composable
+private fun LimitRequest(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        confirmButton = { TextButton(onClick = { onDismiss() }) { Text(text = "Aceptar") } },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Limite solicitudes",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(text = "No puedes crear más solicitudes, espera a que se completen las creadas o elimina alguna.")
+            }
+        })
 }

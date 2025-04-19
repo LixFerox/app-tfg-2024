@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -42,17 +43,22 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
+import com.lixferox.app_tfg_2024.data.datasource.FirestoreDataSource
 import com.lixferox.app_tfg_2024.data.datasource.deleteAccount
 import com.lixferox.app_tfg_2024.data.datasource.obtainUserInfo
 import com.lixferox.app_tfg_2024.data.datasource.obtainUserStats
@@ -79,7 +85,8 @@ fun ProfileInfoScreen(
     navigateToTask: () -> Unit,
     navigateToStats: () -> Unit,
     auth: FirebaseAuth,
-    db: FirebaseFirestore
+    db: FirebaseFirestore,
+    viewModel: FirestoreDataSource
 ) {
     Scaffold(
         topBar = {
@@ -100,7 +107,8 @@ fun ProfileInfoScreen(
                 navigateToStats = navigateToStats,
                 indexBar = 0,
                 auth = auth,
-                db = db
+                db = db,
+                viewModel = viewModel
             )
         }
     ) { innerpadding ->
@@ -153,6 +161,7 @@ private fun ProfileData(
     val user = requireNotNull(currentUser)
     val stats = requireNotNull(currentStats)
 
+    val image by remember { mutableStateOf(user.image) }
     val username by remember { mutableStateOf(user.username) }
     val level by remember { mutableIntStateOf(stats.level) }
     val puntuation by remember { mutableDoubleStateOf(stats.puntuation) }
@@ -170,7 +179,7 @@ private fun ProfileData(
     ) {
         var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
-        UserHeader(username = username, level = level)
+        UserHeader(image = image, username = username, level = level)
         LevelBar(levelBar = levelBar, fraction = 0.5f)
         Spacer(Modifier.height(8.dp))
         StatsSection(puntuation = puntuation, totalRequests = totalRequests)
@@ -202,14 +211,20 @@ private fun ProfileData(
 // COMPONENTE QUE MOSTRARA EL NOMBRE DEL USUARIO Y SU ICONO
 
 @Composable
-private fun UserHeader(username: String, level: Int) {
-    Icon(
-        painter = painterResource(R.drawable.profile),
+private fun UserHeader(image: String, username: String, level: Int) {
+
+    var isError by remember { mutableStateOf(false) }
+    val loadBase = "data:image/webp;base64,$image"
+    AsyncImage(
+        onError = { isError = true },
+        model = loadBase,
         contentDescription = "Icono del perfil de usuario",
         modifier = Modifier
             .size(120.dp)
-            .padding(8.dp),
-        tint = Color.Gray
+            .clip(shape = CircleShape),
+        contentScale = ContentScale.Crop,
+        error = painterResource(R.drawable.profile),
+        colorFilter = if (isError) ColorFilter.tint(color = Color.Gray) else null
     )
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(

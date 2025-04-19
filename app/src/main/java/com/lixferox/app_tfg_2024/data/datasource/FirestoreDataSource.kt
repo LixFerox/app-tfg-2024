@@ -245,11 +245,57 @@ class FirestoreDataSource : ViewModel() {
             }
     }
 
+    // FUNCION QUE OBTIENE LAS PETICIONES DEL USUARIO
+
+    fun obtainRequests(
+        auth: FirebaseAuth,
+        db: FirebaseFirestore,
+        onResult: (List<Request>) -> Unit
+    ) {
+        val uid = auth.currentUser?.uid
+        db.collection(Tables.requests).whereEqualTo("createdByUid", uid)
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot != null) {
+                    val requestList = snapshot.documents.map { document ->
+                        Request(
+                            id = document.getString("id") ?: "",
+                            uidOlder = document.getString("uidOlder") ?: "",
+                            uidHelper = document.getString("uidHelper") ?: "",
+                            title = document.getString("title") ?: "",
+                            description = document.getString("description") ?: "",
+                            urgency = document.getString("urgency"),
+                            olderUsername = document.getString("olderUsername") ?: "",
+                            helperUsername = document.getString("helperUsername") ?: "",
+                            olderAddress = document.getString("olderAddress") ?: "",
+                            helperAddress = document.getString("helperAddress") ?: "",
+                            olderPhone = document.getString("olderPhone") ?: "",
+                            helperPhone = document.getString("helperPhone") ?: "",
+                            acceptedByUid = document.getString("acceptedByUid") ?: "",
+                            createdByUid = document.getString("createdByUid") ?: "",
+                            dateCreated = document.getTimestamp("dateCreated") ?: Timestamp.now(),
+                            status = document.getString("status") ?: "",
+                        )
+                    }
+                    onResult(requestList)
+                }
+            }
+    }
+
     // FUNCION QUE LIMITA LAS PETICIONES DEL USUARIO
 
     fun limitRequest(auth: FirebaseAuth, db: FirebaseFirestore, onResult: (Int) -> Unit) {
         val uid = auth.currentUser?.uid
         db.collection(Tables.requests).whereEqualTo("acceptedByUid", uid).get()
+            .addOnSuccessListener { task ->
+                onResult(task.size())
+            }
+    }
+
+    // FUNCION QUE LIMITA LAS PETICIONES CREADAS
+
+    fun limitCreated(auth: FirebaseAuth, db: FirebaseFirestore, onResult: (Int) -> Unit) {
+        val uid = auth.currentUser?.uid
+        db.collection(Tables.requests).whereEqualTo("createdByUid", uid).get()
             .addOnSuccessListener { task ->
                 onResult(task.size())
             }
@@ -305,7 +351,9 @@ fun obtainUserInfo(auth: FirebaseAuth, db: FirebaseFirestore, onResult: (User) -
                     birth = document.getTimestamp("birth") ?: Timestamp.now(),
                     isHelper = document.getBoolean("isHelper") ?: false,
                     phone = document.getString("phone") ?: "",
-                    address = document.getString("address") ?: ""
+                    address = document.getString("address") ?: "",
+                    dni = document.getString("dni") ?: "",
+                    image = document.getString("image") ?: ""
                 )
                 onResult(user)
             }
@@ -377,7 +425,9 @@ fun updateInfo(
     username: String,
     phone: String,
     birth: String,
-    address: String
+    address: String,
+    dni: String,
+    image: String
 ) {
     val uid = auth.currentUser?.uid
     db.collection(Tables.users).whereEqualTo("uid", uid).get().addOnCompleteListener { task ->
@@ -391,7 +441,9 @@ fun updateInfo(
                     "username", username,
                     "phone", phone,
                     "birth", convertBirth,
-                    "address", address
+                    "address", address,
+                    "dni", dni,
+                    "image", image
                 ).addOnCompleteListener { update ->
                     if (update.isSuccessful) {
                         Log.i(
@@ -433,7 +485,6 @@ fun deleteAccount(
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val dataObtained = task.result.documents
-                    println("LOG $dataObtained")
                     dataObtained.forEach { document ->
                         val delete = db.collection(table.name).document(document.id).delete()
                         deleteTasks.add(delete)
@@ -485,7 +536,7 @@ private fun updateStats(db: FirebaseFirestore, auth: FirebaseAuth, action: Strin
     }
 
     val updateFields = when {
-        action == "createTask" -> mapOf("points" to FieldValue.increment(500))
+        action == "createTask" -> mapOf("points" to FieldValue.increment(50))
         action == "acceptTask" -> mapOf(
             "tasksInProgress" to 1,
             "points" to FieldValue.increment(100)
@@ -533,6 +584,26 @@ private fun updateStats(db: FirebaseFirestore, auth: FirebaseAuth, action: Strin
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+// FUNCION QUE ELIMINA UN PETICION
+
+fun deleteRequest(db: FirebaseFirestore, uid: String, description: String, id: String) {
+    db.collection(Tables.requests).whereEqualTo("id", id).get().addOnCompleteListener { task ->
+        if (task.isSuccessful) {
+            val dataObtained = task.result.documents
+            dataObtained.forEach { document ->
+                db.collection(Tables.requests).document(document.id).delete()
+                val currentActivity = Activity(
+                    uid = uid,
+                    time = Timestamp.now(),
+                    title = "Eliminaste una tarea",
+                    description = description
+                )
+                createActivity(db, currentActivity)
             }
         }
     }

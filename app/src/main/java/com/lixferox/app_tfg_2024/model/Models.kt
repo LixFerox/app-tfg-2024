@@ -12,6 +12,8 @@ data class User(
     val phone: String,
     val address: String,
     val isHelper: Boolean,
+    val dni: String,
+    val image: String
 )
 
 data class Request(

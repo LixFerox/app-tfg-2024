@@ -96,7 +96,8 @@ fun TasksListScreen(
                 navigateToStats = navigateToStats,
                 indexBar = 3,
                 auth = auth,
-                db = db
+                db = db,
+                viewModel = viewModel
             )
         }
     ) { innerpadding ->

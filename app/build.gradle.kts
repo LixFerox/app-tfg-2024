@@ -73,4 +73,6 @@ dependencies {
     implementation(libs.firebase.firestore)
     //DIAGRAMAS
     implementation (libs.compose.charts)
+    // IMAGENES
+    implementation(libs.coil.compose)
 }

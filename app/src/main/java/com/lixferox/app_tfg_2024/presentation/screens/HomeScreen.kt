@@ -19,15 +19,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -53,12 +56,15 @@ import com.lixferox.app_tfg_2024.ui.components.Header
 import com.lixferox.app_tfg_2024.ui.components.NavBar
 import com.lixferox.app_tfg_2024.common.callPhone
 import com.lixferox.app_tfg_2024.data.datasource.FirestoreDataSource
+import com.lixferox.app_tfg_2024.data.datasource.deleteRequest
 import com.lixferox.app_tfg_2024.data.datasource.obtainUserInfo
 import com.lixferox.app_tfg_2024.data.datasource.obtainUserStats
 import com.lixferox.app_tfg_2024.model.Activity
+import com.lixferox.app_tfg_2024.model.Request
 import com.lixferox.app_tfg_2024.model.Stats
 import com.lixferox.app_tfg_2024.model.User
 import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -102,7 +108,8 @@ fun HomeScreen(
                 navigateToStats = navigateToStats,
                 indexBar = 0,
                 auth = auth,
-                db = db
+                db = db,
+                viewModel = viewModel
             )
         }
     ) { innerpadding ->
@@ -134,6 +141,7 @@ private fun Content(
     var currentStats by remember { mutableStateOf<Stats?>(null) }
     var currentUser by remember { mutableStateOf<User?>(null) }
     var currentActivity by remember { mutableStateOf<List<Activity>>(emptyList()) }
+    var requestCreated by remember { mutableStateOf<List<Request>>(emptyList()) }
 
     LaunchedEffect(auth.currentUser) {
         obtainUserStats(auth = auth, db = db) { obtainedStats ->
@@ -145,7 +153,9 @@ private fun Content(
         viewModel.obtainActivity(auth = auth, db = db) { obtainedActivity ->
             currentActivity = obtainedActivity
         }
-
+        viewModel.obtainRequests(auth = auth, db = db) { obtainedRequest ->
+            requestCreated = obtainedRequest
+        }
     }
 
     if (currentUser == null || currentStats == null) {
@@ -177,6 +187,8 @@ private fun Content(
                 totalCompletedTasks = weekCompletedTasks,
                 tasksInProgress = tasksInProgress
             )
+            RequestsCreated(db = db, request = requestCreated)
+            Spacer(modifier = Modifier.width(32.dp))
             RecientlyActivitySection(currentActivity = currentActivity)
         }
         EmergencyButton(modifier = Modifier.align(Alignment.BottomCenter))
@@ -328,6 +340,156 @@ private fun CardsSection(totalCompletedTasks: List<Double>, tasksInProgress: Int
             }
         }
     }
+}
+
+// COMPONENTE QUE MUESTRA LAS SOLICITUDES CREADAS
+
+@Composable
+private fun RequestsCreated(db: FirebaseFirestore, request: List<Request>) {
+    var deleteIsVisible by remember { mutableStateOf(false) }
+    var currentId by remember { mutableStateOf("") }
+    var currentUid by remember { mutableStateOf("") }
+    var currentDescription by remember { mutableStateOf("") }
+
+    data class ItemMenu(
+        val uid: String,
+        val id: String,
+        val title: String,
+        val description: String,
+        val date: String
+    )
+
+    val listItems = request.map { task ->
+        val dateObject = task.dateCreated.toDate()
+        val formatDate = SimpleDateFormat("dd/MM/yyyy hh:mm", Locale.getDefault())
+        val dateTask = formatDate.format(dateObject)
+        ItemMenu(
+            uid = task.createdByUid,
+            id = task.id,
+            title = task.title,
+            description = task.description,
+            date = dateTask,
+        )
+    }
+
+    if (listItems.isEmpty()) {
+        Column(
+            modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Actividad reciente", style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No has creado ninguna solicitud",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+        }
+    } else {
+        Column(
+            modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Solicitudes creadas", style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                listItems.map { item ->
+                    Card(
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = item.title,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color.DarkGray
+                                )
+                                Text(
+                                    text = "${item.date}  • ${item.description}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.Gray
+                                )
+                            }
+                            IconButton(onClick = {
+                                currentId = item.id
+                                currentUid = item.uid
+                                currentDescription = item.description
+                                deleteIsVisible = true
+                            }) {
+                                Icon(
+                                    painter = painterResource(R.drawable.delete),
+                                    contentDescription = "Icono de eliminar",
+                                    modifier = Modifier.size(32.dp),
+                                    tint = Color(color = 0xFFF44336)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (deleteIsVisible) {
+        AlertDelete(onDismiss = { deleteIsVisible = false }, onAccept = {
+            deleteRequest(
+                db = db,
+                uid = currentUid,
+                description = currentDescription,
+                id = currentId
+            )
+            deleteIsVisible = false
+        })
+    }
+}
+
+@Composable
+private fun AlertDelete(onDismiss: () -> Unit, onAccept: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        dismissButton = { TextButton(onClick = { onDismiss() }) { Text(text = "Cancelar") } },
+        confirmButton = { TextButton(onClick = { onAccept() }) { Text(text = "Aceptar") } },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Eliminar solicitud",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(text = "¿Estás seguro que quieres eliminar la solicitud?")
+            }
+        })
 }
 
 // COMPONENTE QUE MUESTRA LA ACTIVIDAD RECUENTE DEL USUARIO

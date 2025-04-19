@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
+import com.lixferox.app_tfg_2024.data.datasource.FirestoreDataSource
 import com.lixferox.app_tfg_2024.data.datasource.obtainUserInfo
 import com.lixferox.app_tfg_2024.data.datasource.obtainUserStats
 import com.lixferox.app_tfg_2024.model.Stats
@@ -70,7 +71,8 @@ fun StatsProfileScreen(
     navigateToTask: () -> Unit,
     navigateToStats: () -> Unit,
     auth: FirebaseAuth,
-    db: FirebaseFirestore
+    db: FirebaseFirestore,
+    viewModel: FirestoreDataSource
 ) {
     Scaffold(
         topBar = {
@@ -91,7 +93,8 @@ fun StatsProfileScreen(
                 navigateToStats = navigateToStats,
                 indexBar = 4,
                 auth = auth,
-                db = db
+                db = db,
+                viewModel = viewModel
             )
         }
     ) { innerpadding ->

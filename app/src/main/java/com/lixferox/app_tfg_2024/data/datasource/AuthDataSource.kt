@@ -5,6 +5,7 @@ import android.widget.Toast
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.lixferox.app_tfg_2024.common.checkDni
 import com.lixferox.app_tfg_2024.data.model.Tables
 import com.lixferox.app_tfg_2024.model.Stats
 import com.lixferox.app_tfg_2024.model.User
@@ -26,7 +27,16 @@ fun loginFirebase(
     }
     auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
         if (task.isSuccessful) {
-            onSuccess()
+            auth.currentUser?.reload()?.addOnCompleteListener { reload ->
+                if (reload.isSuccessful) {
+                    val user = auth.currentUser
+                    if (user != null && user.isEmailVerified) {
+                        onSuccess()
+                    } else {
+                        onError("Tu correo no está verificado.\nRevisa tu bandeja y pulsa el enlace que te hemos enviado.")
+                    }
+                }
+            }
         } else {
             onError(task.exception?.message ?: "Error desconocido al iniciar sesión")
         }
@@ -48,14 +58,19 @@ fun createAccountFirebase(
     isHelper: Boolean,
     address: String,
     phone: String,
+    dni: String,
     context: Context,
 ) {
     if (password != repassword) {
         onError("Las contraseñas no coinciden")
         return
     }
-    if (email.isEmpty() || password.isEmpty() || repassword.isEmpty() || birth.isEmpty()) {
+    if (email.isEmpty() || password.isEmpty() || repassword.isEmpty() || birth.isEmpty() || dni.isEmpty()) {
         onError("Debes rellenar todos los campos")
+        return
+    }
+    if (!checkDni(dni)) {
+        onError("El DNI no es válido")
         return
     }
 
@@ -76,7 +91,9 @@ fun createAccountFirebase(
                 birth = Timestamp(convertBirth),
                 isHelper = isHelper,
                 address = address,
-                phone = phone
+                phone = phone,
+                dni = dni,
+                image = "TODO"
             )
             db.collection(Tables.users).add(currentUser).addOnCompleteListener { added ->
                 if (added.isSuccessful) {

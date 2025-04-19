@@ -37,10 +37,16 @@ fun NavigationWrapper(
                 padding,
                 auth,
                 navigateToSignUp = {
-                    navHostController.navigate(SSignUp)
+                    navHostController.navigate(SSignUp) {
+                        popUpTo(SLogin) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToHome = {
-                    navHostController.navigate(SHome)
+                    navHostController.navigate(SHome) {
+                        popUpTo(SLogin) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -49,7 +55,10 @@ fun NavigationWrapper(
             SignUpScreen(
                 padding,
                 navigateToLogin = {
-                    navHostController.navigate(SLogin)
+                    navHostController.navigate(SLogin) {
+                        popUpTo(SSignUp) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 auth, db
             )
@@ -59,25 +68,46 @@ fun NavigationWrapper(
             HomeScreen(
                 padding,
                 navigateToLogin = {
-                    navHostController.navigate(SLogin)
+                    navHostController.navigate(SLogin) {
+                        popUpTo(SHome) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToSettings = {
-                    navHostController.navigate(SSettings)
+                    navHostController.navigate(SSettings) {
+                        popUpTo(SHome) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToProfileInfo = {
-                    navHostController.navigate(SProfileInfo)
+                    navHostController.navigate(SProfileInfo) {
+                        popUpTo(SHome) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToHome = {
-                    navHostController.navigate(SHome)
+                    navHostController.navigate(SHome) {
+                        popUpTo(SHome) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToSearch = {
-                    navHostController.navigate(SSearch)
+                    navHostController.navigate(SSearch) {
+                        popUpTo(SHome) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToTask = {
-                    navHostController.navigate(STask)
+                    navHostController.navigate(STask) {
+                        popUpTo(SHome) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToStats = {
-                    navHostController.navigate(SStats)
+                    navHostController.navigate(SStats) {
+                        popUpTo(SHome) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 auth, db, viewModel
             )
@@ -87,27 +117,48 @@ fun NavigationWrapper(
             SettingsScreen(
                 padding,
                 navigateToLogin = {
-                    navHostController.navigate(SLogin)
+                    navHostController.navigate(SLogin) {
+                        popUpTo(SSettings) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToSettings = {
-                    navHostController.navigate(SSettings)
+                    navHostController.navigate(SSettings) {
+                        popUpTo(SSettings) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToProfileInfo = {
-                    navHostController.navigate(SProfileInfo)
+                    navHostController.navigate(SProfileInfo) {
+                        popUpTo(SSettings) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToHome = {
-                    navHostController.navigate(SHome)
+                    navHostController.navigate(SHome) {
+                        popUpTo(SSettings) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToSearch = {
-                    navHostController.navigate(SSearch)
+                    navHostController.navigate(SSearch) {
+                        popUpTo(SSettings) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToTask = {
-                    navHostController.navigate(STask)
+                    navHostController.navigate(STask) {
+                        popUpTo(SSettings) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToStats = {
-                    navHostController.navigate(SStats)
+                    navHostController.navigate(SStats) {
+                        popUpTo(SSettings) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
-                auth, db
+                auth, db, viewModel
             )
         }
 
@@ -115,51 +166,93 @@ fun NavigationWrapper(
             ProfileInfoScreen(
                 padding,
                 navigateToLogin = {
-                    navHostController.navigate(SLogin)
+                    navHostController.navigate(SLogin) {
+                        popUpTo(SProfileInfo) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToSettings = {
-                    navHostController.navigate(SSettings)
+                    navHostController.navigate(SSettings) {
+                        popUpTo(SProfileInfo) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToProfileInfo = {
-                    navHostController.navigate(SProfileInfo)
+                    navHostController.navigate(SProfileInfo) {
+                        popUpTo(SProfileInfo) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToHome = {
-                    navHostController.navigate(SHome)
+                    navHostController.navigate(SHome) {
+                        popUpTo(SProfileInfo) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToSearch = {
-                    navHostController.navigate(SSearch)
+                    navHostController.navigate(SSearch) {
+                        popUpTo(SProfileInfo) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToTask = {
-                    navHostController.navigate(STask)
+                    navHostController.navigate(STask) {
+                        popUpTo(SProfileInfo) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToStats = {
-                    navHostController.navigate(SStats)
+                    navHostController.navigate(SStats) {
+                        popUpTo(SProfileInfo) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
-                auth, db
+                auth, db, viewModel
             )
         }
         composable<SSearch> {
             SearchRequestsScreen(
                 padding, navigateToLogin = {
-                    navHostController.navigate(SLogin)
+                    navHostController.navigate(SLogin) {
+                        popUpTo(SSearch) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToSettings = {
-                    navHostController.navigate(SSettings)
+                    navHostController.navigate(SSettings) {
+                        popUpTo(SSearch) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToProfileInfo = {
-                    navHostController.navigate(SProfileInfo)
+                    navHostController.navigate(SProfileInfo) {
+                        popUpTo(SSearch) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToHome = {
-                    navHostController.navigate(SHome)
+                    navHostController.navigate(SHome) {
+                        popUpTo(SSearch) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToSearch = {
-                    navHostController.navigate(SSearch)
+                    navHostController.navigate(SSearch) {
+                        popUpTo(SSearch) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToTask = {
-                    navHostController.navigate(STask)
+                    navHostController.navigate(STask) {
+                        popUpTo(SSearch) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToStats = {
-                    navHostController.navigate(SStats)
+                    navHostController.navigate(SStats) {
+                        popUpTo(SSearch) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 auth, db, viewModel
             )
@@ -167,25 +260,46 @@ fun NavigationWrapper(
         composable<STask> {
             TasksListScreen(
                 padding, navigateToLogin = {
-                    navHostController.navigate(SLogin)
+                    navHostController.navigate(SLogin) {
+                        popUpTo(STask) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToSettings = {
-                    navHostController.navigate(SSettings)
+                    navHostController.navigate(SSettings) {
+                        popUpTo(STask) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToProfileInfo = {
-                    navHostController.navigate(SProfileInfo)
+                    navHostController.navigate(SProfileInfo) {
+                        popUpTo(STask) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToHome = {
-                    navHostController.navigate(SHome)
+                    navHostController.navigate(SHome) {
+                        popUpTo(STask) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToSearch = {
-                    navHostController.navigate(SSearch)
+                    navHostController.navigate(SSearch) {
+                        popUpTo(STask) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToTask = {
-                    navHostController.navigate(STask)
+                    navHostController.navigate(STask) {
+                        popUpTo(STask) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToStats = {
-                    navHostController.navigate(SStats)
+                    navHostController.navigate(SStats) {
+                        popUpTo(STask) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 auth, db, viewModel
             )
@@ -193,27 +307,48 @@ fun NavigationWrapper(
         composable<SStats> {
             StatsProfileScreen(
                 padding, navigateToLogin = {
-                    navHostController.navigate(SLogin)
+                    navHostController.navigate(SLogin) {
+                        popUpTo(SStats) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToSettings = {
-                    navHostController.navigate(SSettings)
+                    navHostController.navigate(SSettings) {
+                        popUpTo(SStats) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToProfileInfo = {
-                    navHostController.navigate(SProfileInfo)
+                    navHostController.navigate(SProfileInfo) {
+                        popUpTo(SStats) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToHome = {
-                    navHostController.navigate(SHome)
+                    navHostController.navigate(SHome) {
+                        popUpTo(SStats) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToSearch = {
-                    navHostController.navigate(SSearch)
+                    navHostController.navigate(SSearch) {
+                        popUpTo(SStats) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToTask = {
-                    navHostController.navigate(STask)
+                    navHostController.navigate(STask) {
+                        popUpTo(SStats) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
                 navigateToStats = {
-                    navHostController.navigate(SStats)
+                    navHostController.navigate(SStats) {
+                        popUpTo(SStats) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
-                auth, db
+                auth, db, viewModel
             )
         }
     }

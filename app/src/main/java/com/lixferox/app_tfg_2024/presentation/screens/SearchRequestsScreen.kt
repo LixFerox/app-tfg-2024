@@ -96,7 +96,8 @@ fun SearchRequestsScreen(
                 navigateToStats = navigateToStats,
                 indexBar = 1,
                 auth = auth,
-                db = db
+                db = db,
+                viewModel = viewModel
             )
         }
     ) { innerpadding ->
