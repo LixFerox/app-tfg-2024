@@ -73,7 +73,7 @@ jobs:
       - name: Renombrar unsigned APK a release.apk
         run: |
           mv \
-            app/build/outputs/apk/debug/app-release-unsigned.apk \
+            app/build/outputs/apk/debug/app-debug.apk \
             app/build/outputs/apk/debug/app-release.apk
 
       - name: Upload APK to Release
