@@ -45,7 +45,7 @@ La aplicación sigue una arquitectura MVVM (Model-View-ViewModel) con los siguie
 1. Clona el repositorio:
 
 ```bash
-git  clone  --depth  1  git@github.com:LixFerox/tfg-2024.git
+git clone --depth 1 git@github.com:LixFerox/tfg-2024.git
 ```
 
 2. Abre el proyecto con Android Studio
