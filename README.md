@@ -20,7 +20,7 @@ Vitalist es una aplicación móvil Android diseñada para conectar a personas qu
 
 - **Kotlin** - Lenguaje de programación principal
 - **Jetpack Compose** - Framework moderno para UI
-- **Firebase Authentication** - Gestión de usuarios
+- **Firebase Authentication** - Gestión de usuarios, verificación de correo y restablecimiento de contraseña
 - **Firestore** - Base de datos NoSQL
 - **Material Design 3** - Diseño de interfaz moderno
 - **Navigation Compose** - Navegación entre pantallas

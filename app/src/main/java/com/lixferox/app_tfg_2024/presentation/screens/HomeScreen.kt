@@ -378,7 +378,7 @@ private fun RequestsCreated(db: FirebaseFirestore, request: List<Request>) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Actividad reciente", style = MaterialTheme.typography.titleLarge,
+                text = "Solicitudes creadas", style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
             )
             Column(
@@ -537,7 +537,7 @@ private fun RecientlyActivitySection(currentActivity: List<Activity>) {
         }
     } else {
         Column(
-            modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 80.dp), verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
