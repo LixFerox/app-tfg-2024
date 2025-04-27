@@ -518,6 +518,8 @@ private fun RequestsCreated(
     }
 }
 
+// COMPONENTE QUE MUESTRA UNA ALERTA PARA VER INFORMACION DE LA  PETICION CREADA
+
 @Composable
 private fun AlertRequest(
     auth: FirebaseAuth,
@@ -686,7 +688,11 @@ private fun AlertRequest(
                                 onClick = {
                                     callPhone(context = context, phone = item.phone)
                                 },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(
+                                        0xFF2196F3
+                                    )
+                                )
                             ) {
                                 Text(
                                     text = "Llamar",
@@ -699,7 +705,11 @@ private fun AlertRequest(
                                 onClick = {
                                     openMaps(context = context, ubication = item.address)
                                 },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF009688))
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(
+                                        0xFF009688
+                                    )
+                                )
                             ) {
                                 Text(
                                     text = "Ubicación",

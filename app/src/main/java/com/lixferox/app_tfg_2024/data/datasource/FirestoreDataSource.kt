@@ -305,7 +305,7 @@ class FirestoreDataSource : ViewModel() {
     fun getCurrentRequest(
         db: FirebaseFirestore,
         id: String,
-        onResult: (Request) -> Unit
+        onResult: (Request?) -> Unit
     ) {
         db.collection(Tables.requests).whereEqualTo("id", id).addSnapshotListener { snapshot, _ ->
             if (snapshot != null) {
