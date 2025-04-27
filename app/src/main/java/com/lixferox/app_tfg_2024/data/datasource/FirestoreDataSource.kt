@@ -307,9 +307,19 @@ class FirestoreDataSource : ViewModel() {
         id: String,
         onResult: (Request?) -> Unit
     ) {
-        db.collection(Tables.requests).whereEqualTo("id", id).addSnapshotListener { snapshot, _ ->
-            if (snapshot != null) {
-                val document = snapshot.documents.first()
+        db.collection(Tables.requests).whereEqualTo("id", id).limit(1)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("ErrorObtainRequest", "Error obtener la peticion")
+                    onResult(null)
+                    return@addSnapshotListener
+                }
+                val document = snapshot?.documents?.firstOrNull()
+                if (document == null) {
+                    Log.w("NoRequestObtained", "No se encontró ninguna petición con id=$id")
+                    onResult(null)
+                    return@addSnapshotListener
+                }
                 val request = Request(
                     id = document.getString("id") ?: "",
                     uidOlder = document.getString("uidOlder") ?: "",
@@ -330,7 +340,6 @@ class FirestoreDataSource : ViewModel() {
                 )
                 onResult(request)
             }
-        }
     }
 }
 
@@ -567,19 +576,18 @@ private fun updateStats(db: FirebaseFirestore, auth: FirebaseAuth, action: Strin
         DayOfWeek.SUNDAY -> 6
     }
 
+
     val updateFields = when {
         action == "createTask" -> mapOf("points" to FieldValue.increment(50))
         action == "acceptTask" -> mapOf(
-            "tasksInProgress" to 1,
+            "tasksInProgress" to FieldValue.increment(1),
             "points" to FieldValue.increment(100)
         )
 
         action == "completeTask" -> mapOf(
             "totalCompletedTasks" to FieldValue.increment(1),
             "points" to FieldValue.increment(200),
-            "weekCompletedTasks" to FieldValue.increment(1)
-        ).plus(
-            mapOf("weekCompletedTasks" to FieldValue.arrayUnion(dateOfWeek))
+            "tasksInProgress" to FieldValue.increment(-1),
         )
 
         action == "cancelTask" -> mapOf(
@@ -588,6 +596,42 @@ private fun updateStats(db: FirebaseFirestore, auth: FirebaseAuth, action: Strin
         )
 
         else -> mapOf("status" to "No se ha escogido ninguna opcion")
+    }
+    if (action == "completeTask") {
+        db.collection(Tables.stats)
+            .whereEqualTo("uid", uid)
+            .limit(1)
+            .get()
+            .addOnCompleteListener { task ->
+                if (!task.isSuccessful) return@addOnCompleteListener
+
+                val document = task.result?.documents?.firstOrNull() ?: return@addOnCompleteListener
+                val reference = document.reference
+
+                val weekArray = (document.get("weekCompletedTasks") as? MutableList<Double>)
+                    ?: MutableList(7) { 0.0 }
+                while (weekArray.size < 7) weekArray.add(0.0)
+                weekArray[dateOfWeek] = weekArray[dateOfWeek] + 1
+
+                reference.update("weekCompletedTasks", weekArray)
+                    .addOnSuccessListener {
+                        Log.d("updateWeekTasks", "Se ha actualizado el dia de la semana")
+                    }
+            }
+        db.collection(Tables.requests).whereEqualTo("acceptedByUid", uid)
+            .whereEqualTo("status", "Completada").get()
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val dataObtained = task.result.documents
+
+                    dataObtained.forEach { document ->
+                        db.collection(Tables.requests).document(document.id).delete()
+                            .addOnSuccessListener {
+                                Log.i("deleteRequest", "Se ha borrado la peticion ${document.id}")
+                            }
+                    }
+                }
+            }
     }
 
     db.collection(Tables.stats).whereEqualTo("uid", uid).get().addOnCompleteListener { task ->
@@ -608,7 +652,10 @@ private fun updateStats(db: FirebaseFirestore, auth: FirebaseAuth, action: Strin
                                     document.reference.update(fieldsLevel)
                                         .addOnCompleteListener { updateLevel ->
                                             if (updateLevel.isSuccessful) {
-                                                Log.i("updateLevel", "Se han actualizado el nivel")
+                                                Log.i(
+                                                    "updateLevel",
+                                                    "Se han actualizado el nivel"
+                                                )
                                             }
                                         }
                                 }
