@@ -214,14 +214,15 @@ private fun ListRequest(auth: FirebaseAuth, db: FirebaseFirestore, viewModel: Fi
             id = task.id,
             title = task.title,
             description = task.description,
-            username = if (isHelper == true) task.olderUsername
-                ?: "Usuario desconocido" else task.helperUsername ?: "Desconocida",
-            address = if (isHelper == true) task.olderAddress
-                ?: "Usuario desconocido" else task.helperAddress ?: "Desconocida",
+            username = if (isHelper) task.olderUsername
+                ?: "Usuario desconocido" else task.helperUsername ?: "Usuario desconocido",
+            address = if (isHelper) task.olderAddress
+                ?: "Dirección desconocida" else task.helperAddress ?: "Dirección desconocida",
             date = dateTask,
             phone = if (isHelper) task.olderPhone else task.helperPhone,
             isHelper = isHelper,
-            uid = if (isHelper) task.uidOlder ?: "Desconocido" else task.uidHelper ?: "Desconocido"
+            uid = if (isHelper) task.uidOlder ?: "Usuario desconocido" else task.uidHelper
+                ?: "Usuario desconocido"
         )
     }
 

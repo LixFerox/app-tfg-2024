@@ -300,6 +300,38 @@ class FirestoreDataSource : ViewModel() {
                 onResult(task.size())
             }
     }
+
+    // FUNCION QUE RECUPERA LA PETICION ACTUAL
+    fun getCurrentRequest(
+        db: FirebaseFirestore,
+        id: String,
+        onResult: (Request) -> Unit
+    ) {
+        db.collection(Tables.requests).whereEqualTo("id", id).addSnapshotListener { snapshot, _ ->
+            if (snapshot != null) {
+                val document = snapshot.documents.first()
+                val request = Request(
+                    id = document.getString("id") ?: "",
+                    uidOlder = document.getString("uidOlder") ?: "",
+                    uidHelper = document.getString("uidHelper") ?: "",
+                    title = document.getString("title") ?: "",
+                    description = document.getString("description") ?: "",
+                    urgency = document.getString("urgency"),
+                    olderUsername = document.getString("olderUsername") ?: "",
+                    helperUsername = document.getString("helperUsername") ?: "",
+                    olderAddress = document.getString("olderAddress") ?: "",
+                    helperAddress = document.getString("helperAddress") ?: "",
+                    olderPhone = document.getString("olderPhone") ?: "",
+                    helperPhone = document.getString("helperPhone") ?: "",
+                    acceptedByUid = document.getString("acceptedByUid") ?: "",
+                    createdByUid = document.getString("createdByUid") ?: "",
+                    dateCreated = document.getTimestamp("dateCreated") ?: Timestamp.now(),
+                    status = document.getString("status") ?: "",
+                )
+                onResult(request)
+            }
+        }
+    }
 }
 
 // FUNCION QUE OBTIENE LAS ESTADISTICAS DEL USUARIO

@@ -1,6 +1,8 @@
 package com.lixferox.app_tfg_2024.presentation.screens
 
 import android.os.Build
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,6 +50,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
@@ -55,15 +60,18 @@ import com.lixferox.app_tfg_2024.R
 import com.lixferox.app_tfg_2024.ui.components.Header
 import com.lixferox.app_tfg_2024.ui.components.NavBar
 import com.lixferox.app_tfg_2024.common.callPhone
+import com.lixferox.app_tfg_2024.common.openMaps
 import com.lixferox.app_tfg_2024.data.datasource.FirestoreDataSource
 import com.lixferox.app_tfg_2024.data.datasource.deleteRequest
 import com.lixferox.app_tfg_2024.data.datasource.obtainUserInfo
 import com.lixferox.app_tfg_2024.data.datasource.obtainUserStats
+import com.lixferox.app_tfg_2024.data.model.Tables
 import com.lixferox.app_tfg_2024.model.Activity
 import com.lixferox.app_tfg_2024.model.Request
 import com.lixferox.app_tfg_2024.model.Stats
 import com.lixferox.app_tfg_2024.model.User
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -187,7 +195,7 @@ private fun Content(
                 totalCompletedTasks = weekCompletedTasks,
                 tasksInProgress = tasksInProgress
             )
-            RequestsCreated(db = db, request = requestCreated)
+            RequestsCreated(db = db, auth = auth, viewModel = viewModel, request = requestCreated)
             Spacer(modifier = Modifier.width(32.dp))
             RecientlyActivitySection(currentActivity = currentActivity)
         }
@@ -345,8 +353,15 @@ private fun CardsSection(totalCompletedTasks: List<Double>, tasksInProgress: Int
 // COMPONENTE QUE MUESTRA LAS SOLICITUDES CREADAS
 
 @Composable
-private fun RequestsCreated(db: FirebaseFirestore, request: List<Request>) {
+private fun RequestsCreated(
+    db: FirebaseFirestore,
+    auth: FirebaseAuth,
+    viewModel: FirestoreDataSource,
+    request: List<Request>
+) {
     var deleteIsVisible by remember { mutableStateOf(false) }
+    var requestIsVisible by remember { mutableStateOf(false) }
+    var userRequestId by remember { mutableStateOf("") }
     var currentId by remember { mutableStateOf("") }
     var currentUid by remember { mutableStateOf("") }
     var currentDescription by remember { mutableStateOf("") }
@@ -417,39 +432,61 @@ private fun RequestsCreated(db: FirebaseFirestore, request: List<Request>) {
                         modifier = Modifier
                             .fillMaxWidth()
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Text(
+                                        text = item.title,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color.DarkGray
+                                    )
+                                    Text(
+                                        text = "${item.date}  • ${item.description}",
+                                        modifier = Modifier.fillMaxWidth(0.8f),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.Gray,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                IconButton(onClick = {
+                                    currentId = item.id
+                                    currentUid = item.uid
+                                    currentDescription = item.description
+                                    deleteIsVisible = true
+                                }) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.delete),
+                                        contentDescription = "Icono de eliminar",
+                                        modifier = Modifier.size(32.dp),
+                                        tint = Color(color = 0xFFF44336)
+                                    )
+                                }
+                            }
+                            Button(
+                                onClick = {
+                                    requestIsVisible = true
+                                    userRequestId = item.id
+                                },
+                                modifier = Modifier,
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(color = 0xFF2196F3))
                             ) {
                                 Text(
-                                    text = item.title,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Color.DarkGray
-                                )
-                                Text(
-                                    text = "${item.date}  • ${item.description}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.Gray
-                                )
-                            }
-                            IconButton(onClick = {
-                                currentId = item.id
-                                currentUid = item.uid
-                                currentDescription = item.description
-                                deleteIsVisible = true
-                            }) {
-                                Icon(
-                                    painter = painterResource(R.drawable.delete),
-                                    contentDescription = "Icono de eliminar",
-                                    modifier = Modifier.size(32.dp),
-                                    tint = Color(color = 0xFFF44336)
+                                    text = "Ver solicitud",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
@@ -469,6 +506,213 @@ private fun RequestsCreated(db: FirebaseFirestore, request: List<Request>) {
             deleteIsVisible = false
         })
     }
+    if (requestIsVisible) {
+        AlertRequest(
+            auth = auth,
+            db = db,
+            viewModel = viewModel,
+            onDismiss = { requestIsVisible = false },
+            onAccept = { requestIsVisible = false },
+            id = userRequestId
+        )
+    }
+}
+
+@Composable
+private fun AlertRequest(
+    auth: FirebaseAuth,
+    db: FirebaseFirestore,
+    viewModel: FirestoreDataSource,
+    onDismiss: () -> Unit,
+    onAccept: () -> Unit,
+    id: String
+) {
+    val user = auth.currentUser
+        ?: run {
+            return
+        }
+    val uid = user.uid
+
+    var isHelper by remember { mutableStateOf(false) }
+    var loading by remember { mutableStateOf(true) }
+    var currentRequest by remember { mutableStateOf<Request?>(null) }
+    val context = LocalContext.current
+
+    data class Item(
+        val id: String,
+        val acceptedBy: String,
+        val createdBy: String,
+        val dateCreated: String,
+        val description: String,
+        val address: String,
+        val phone: String,
+        val title: String,
+        val username: String,
+    )
+
+    LaunchedEffect(uid) {
+        val snap = db.collection(Tables.users)
+            .whereEqualTo("uid", uid)
+            .get()
+            .await()
+        isHelper = snap.documents
+            .firstOrNull()
+            ?.getBoolean("helper")
+            ?: false
+        viewModel.getCurrentRequest(db = db, id = id) { request ->
+            currentRequest = request
+            loading = false
+        }
+    }
+
+    if (loading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    val item = currentRequest?.let { task ->
+        val dateObject = task.dateCreated.toDate()
+        val formatDate = SimpleDateFormat("dd/MM/yyyy hh:mm", Locale.getDefault())
+        val dateTask = formatDate.format(dateObject)
+
+        Item(
+            id = task.id,
+            acceptedBy = task.acceptedByUid ?: "Usuario desconocido",
+            createdBy = task.createdByUid,
+            dateCreated = dateTask,
+            description = task.description,
+            address = if (isHelper) task.olderAddress
+                ?: "Dirección desconocida" else task.helperAddress ?: "Dirección desconocida",
+            phone = if (isHelper) task.olderPhone else task.helperPhone,
+            title = task.title,
+            username = if (isHelper) task.olderUsername
+                ?: "Usuario desnococido" else task.helperUsername ?: "Usuario desnococido"
+        )
+    }
+
+
+
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        confirmButton = { TextButton(onClick = { onAccept() }) { Text(text = "Aceptar") } },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Ver solicitud",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                item?.let {
+                    Card(
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 16.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = item.title,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier
+                                        .padding(end = 8.dp)
+                                        .weight(1f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = item.dateCreated,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color.Gray,
+                                    textAlign = TextAlign.End,
+                                    modifier = Modifier.widthIn(min = 100.dp)
+                                )
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    painter = painterResource(R.drawable.profile),
+                                    contentDescription = "Icono del perfil",
+                                    modifier = Modifier.size(48.dp),
+                                    tint = Color.Gray
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = "Aceptado por:",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = item.username,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Normal
+                                    )
+                                }
+                            }
+                            Column {
+                                Text(
+                                    text = "Dirección:",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = item.address,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.Gray
+                                )
+                            }
+                            Button(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    callPhone(context = context, phone = item.phone)
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
+                            ) {
+                                Text(
+                                    text = "Llamar",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Button(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    openMaps(context = context, ubication = item.address)
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF009688))
+                            ) {
+                                Text(
+                                    text = "Ubicación",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+
+                }
+            }
+        })
 }
 
 @Composable
@@ -537,7 +781,10 @@ private fun RecientlyActivitySection(currentActivity: List<Activity>) {
         }
     } else {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 80.dp), verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 80.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
