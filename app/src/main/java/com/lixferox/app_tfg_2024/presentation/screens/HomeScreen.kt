@@ -1,8 +1,6 @@
 package com.lixferox.app_tfg_2024.presentation.screens
 
 import android.os.Build
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -80,7 +78,21 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.abs
 
-// VENTANA PRINCIPAL DEL INICIO
+/**
+ * VENTANA PRINCIPAL DE LA APLICACIÓN.
+ *
+ * @param paddingValues ESPACIANDO QUE SE APLICA EN LAS VENTANAS DE LA APLICACIÓN.
+ * @param navigateToLogin CALLBACK PARA NAVEGAR A LA VENTANA DE LOGIN.
+ * @param navigateToSettings CALLBACK PARA NAVEGAR A LA VENTANA DE AJUSTES.
+ * @param navigateToProfileInfo CALLBACK PARA NAVEGAR A LA VENTANA DE INFORMACIÓN DEL USUARIO.
+ * @param navigateToHome CALLBACK PARA NAVEGAR A LA VENTANA DE INICIO.
+ * @param navigateToSearch CALLBACK PARA NAVEGAR A LA VENTANA DE BÚSQUEDA.
+ * @param navigateToTask CALLBACK PARA NAVEGAR A LA VENTANA DE TAREAS.
+ * @param navigateToStats CALLBACK PARA NAVEGAR A LA VENTANA DE ESTADÍSTICAS.
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * @param viewModel VIEWMODEL QIUE TIENE LA LÓGICA PARA PODER ACCEDER A LOS DATOS.
+ * */
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -136,7 +148,14 @@ fun HomeScreen(
 
 }
 
-// COMPONENTE QUE IMPORTARA TODAS LAS DEMAS SECCIONES DE LA VENTANA
+/**
+ * COMPONENTE DEL CONTENIDO PRINCIPAL DE LA VENTANA DE INICIO, MUESTRA LAS ESTADÍSTICAS, SOLICITUDES Y ACTIVIDAD RECIENTE.
+ *
+ * @param modifier MODIFICADOR QUE PERMITE PERSONALIZAR EL LAYOUT.
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * @param viewModel VIEWMODEL QUE TIENE LA LÓGICA PARA PODER ACCEDER A LOS DATOS.
+ * */
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -203,7 +222,11 @@ private fun Content(
     }
 }
 
-// COMPONENTE QUE MUESTRA EL NOMRE DEL USUARIO JUNTOA LA FECHA
+/**
+ * COMPONENTE QUE MUESTRA EL NOMBRE DEL USUARIO AUTENTICADO.
+ *
+ * @param username NOMBRE DEL USUARIO AUTENTICADO.
+ * */
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -265,7 +288,12 @@ private fun WelcomeSection(username: String) {
     }
 }
 
-//COMPONENTE QUE  MUESTRA LAS TAREAS DEL USUARIO
+/**
+ * COMPONENTE QUE MUESTRA LAS TAREAS COMPLETADAS Y EL PROGRESO.
+ *
+ * @param totalCompletedTasks LISTA CON EL NÚMERO DE TAREAS COMPLETADAS POR DÍA DE LA SEMANA.
+ * @param tasksInProgress NÚMERO DE TAREAS EN PROGRESO.
+ * */
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -350,7 +378,14 @@ private fun CardsSection(totalCompletedTasks: List<Double>, tasksInProgress: Int
     }
 }
 
-// COMPONENTE QUE MUESTRA LAS SOLICITUDES CREADAS
+/**
+ * COMPONENTE QUE MUESTRA LAS SOLICITUDES CREADAS, ADEMÁS PERMITE ELIMINARLA O VER DETALLES DE LA SOLICITUD.
+ *
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+ * @param viewModel VIEWMODEL QUE TIENE LA LÓGICA PARA PODER ACCEDER A LOS DATOS.
+ * @param request LISTA DE SOLICITUDES DEL USUARIO.
+ * */
 
 @Composable
 private fun RequestsCreated(
@@ -518,7 +553,16 @@ private fun RequestsCreated(
     }
 }
 
-// COMPONENTE QUE MUESTRA UNA ALERTA PARA VER INFORMACION DE LA  PETICION CREADA
+/**
+ * COMPONENTE QUE MUESTRA LA INFORMACIÓN DE LA SOLICITUD CREADA POR EL USUARIO, PUEDE LLAMAR O VER LA UBICACIÓN DEL USUARIO QUE HA ACEPTADO LA SOLICITUD.
+ *
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+ * @param viewModel VIEWMODEL QUE TIENE LA LÓGICA PARA PODER ACCEDER A LOS DATOS.
+ * @param onDismiss CALLBACK QUE SE EJECUTA AL CANCELAR EL DIÁLOGO.
+ * @param onAccept CALLBACK QUE SE EJECUTA AL ACEPTAR.
+ * @param id ID DE LA SOLICITUD.
+ * */
 
 @Composable
 private fun AlertRequest(
@@ -725,6 +769,13 @@ private fun AlertRequest(
         })
 }
 
+/**
+ * COMPONENTE QUE MUESTRA UNA ALERTA PARA CONFIRMAR LA ELIMINACIÓN DE LA SOLICITUD.
+ *
+ * @param onDismiss CALLBACK QUE SE EJECUTA AL CANCELAR EL DIÁLOGO.
+ * @param onAccept CALLBACK QUE SE EJECUTA AL CONFIRMAR LA ELIMINACIÓN DE LA SOLICITUD.
+ * */
+
 @Composable
 private fun AlertDelete(onDismiss: () -> Unit, onAccept: () -> Unit) {
     AlertDialog(
@@ -746,7 +797,11 @@ private fun AlertDelete(onDismiss: () -> Unit, onAccept: () -> Unit) {
         })
 }
 
-// COMPONENTE QUE MUESTRA LA ACTIVIDAD RECUENTE DEL USUARIO
+/**
+ * COMPONENTE QUE MUESTRA LA ACTIVIDAD RECIENTE DEL USUARIO.
+ *
+ * @param currentActivity LISTA DE LA ACTIVIDAD RECIENTE DEL USUARIO.
+ * */
 
 @Composable
 private fun RecientlyActivitySection(currentActivity: List<Activity>) {
@@ -862,7 +917,11 @@ private fun RecientlyActivitySection(currentActivity: List<Activity>) {
     }
 }
 
-// METODO QUE LLAMA A EMERGENCIAS
+/**
+ * COMPONENTE QUE CONTIENE EL BOTÓN DE EMERGENCIA QUE PERMITE REALIZAR UNA LLAMADA AL 061.
+ *
+ * @param modifier MODIFICADOR QUE PERMITE PERSONALIZAR EL LAYOUT.
+ * */
 
 @Composable
 private fun EmergencyButton(modifier: Modifier = Modifier) {

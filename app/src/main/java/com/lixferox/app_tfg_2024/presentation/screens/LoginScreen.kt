@@ -48,7 +48,14 @@ import com.google.firebase.auth.FirebaseAuth
 import com.lixferox.app_tfg_2024.R
 import com.lixferox.app_tfg_2024.data.datasource.loginFirebase
 
-// VENTANA DEL LOGIN
+/**
+ * VENTANA DE LOGIN DE LA APLICACIÓN.
+ *
+ * @param paddingValues ESPACIANDO QUE SE APLICA EN LAS VENTANAS DE LA APLICACIÓN.
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+ * @param navigateToSignUp CALLBACK PARA NAVEGAR A LA VENTANA DE REGISTRO.
+ * @param navigateToHome CALLBACK PARA NAVEGAR A LA VENTANA DE INICIO.
+ * */
 
 @Composable
 fun LoginScreen(
@@ -76,7 +83,11 @@ fun LoginScreen(
     }
 }
 
-// COMPONENTE QUE MOSTRARA EL LOGO DE LA APP
+/**
+ * COMPONENTE QUE MUESTRA EL LOGO DE LA APLICACIÓN.
+ *
+ * @param modifier MODIFICADOR QUE PERMITE PERSONALIZAR EL LAYOUT.
+ * */
 
 @Composable
 private fun Logo(modifier: Modifier = Modifier) {
@@ -100,7 +111,13 @@ private fun Logo(modifier: Modifier = Modifier) {
     }
 }
 
-// COMPONENTE QUE TENDRA EL FORMULARIO DE INICIO DE SESION
+/**
+ * COMPONENTE QUE CONTIENE EL FORMULARIO DONDE EL USUARIO INTRODUCIRÁ SUS DATOS PARA AUTENTICARSE.
+ *
+ * @param modifier MODIFICADOR QUE PERMITE PERSONALIZAR EL LAYOUT.
+ * @param navigateToHome CALLBACK PARA NAVEGAR A LA VENTANA DE INICIO.
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+ * */
 
 @Composable
 private fun Form(
@@ -236,7 +253,12 @@ private fun Form(
     }
 }
 
-// COMPONENTE QUE MOVERA AL USUARIO A LA VENTANA DE CREAR CUENTA EN CASO DE NO TENER UNA
+/**
+ * COMPONENTE QUE PERMITE NAVEGAR AL USUARIO A LA VENTANA DE REGISRO EN CASO DE NO TENER CUENTA.
+ *
+ * @param modifier MODIFICADOR QUE PERMITE PERSONALIZAR EL LAYOUT.
+ * @param navigateToSignUp CALLBACK PARA NAVEGAR A LA VENTANA DE REGISTRO.
+ * */
 
 @Composable
 private fun SignIn(modifier: Modifier = Modifier, navigateToSignUp: () -> Unit) {
@@ -266,7 +288,13 @@ private fun SignIn(modifier: Modifier = Modifier, navigateToSignUp: () -> Unit) 
     }
 }
 
-//  COMPONENTE QUE PERMITE CAMBIAR LA CONTRASEÑA DEL USUARIO
+/**
+ * COMPONENTE QUE MUESTA UNA ALERTA EN CASO DE QUE EL USUARIO QUIERA CAMBIAR SU CONTRASEÑA.
+ *
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+ * @param onDismiss CALLBACK QUE SE EJECUTA AL CANCELAR EL DIÁLOGO.
+ * @param onAccept CALLBACK QUE SE EJECUTA AL ACEPTAR.
+ * */
 
 @Composable
 private fun ResetPassword(auth: FirebaseAuth, onDismiss: () -> Unit, onAccept: () -> Unit) {

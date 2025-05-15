@@ -19,7 +19,15 @@ import com.lixferox.app_tfg_2024.presentation.screens.SignUpScreen
 import com.lixferox.app_tfg_2024.presentation.screens.StatsProfileScreen
 import com.lixferox.app_tfg_2024.presentation.screens.TasksListScreen
 
-// METODO QUE SE ENCARGA DE NAVEGAR ENTRE LAS VENTANAS DE LA APP
+/**
+ * METODO QUE SE ENCARGA DE NAVEGAR ENTRE LAS DIFERENTES VENTANAS QUE HAY CON JETPACK COMPOSE.
+ *
+ * @param navHostController CONTROLADOR DE NAVEGACIÓN PARA PODER REALIZAR NAVEGACIÓN ENTRE VENTANAS.
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO..
+ * @param padding ESPACIANDO QUE SE APLICA EN LAS VENTANAS DE LA APLICACIÓN.
+ * @param viewModel VIEWMODEL QIUE TIENE LA LÓGICA PARA PODER ACCEDER A LOS DATOS.
+ * */
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable

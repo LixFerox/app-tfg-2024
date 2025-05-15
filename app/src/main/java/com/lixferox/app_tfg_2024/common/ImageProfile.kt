@@ -26,7 +26,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 
-// COMPONENTE QUE PERMITE ELEGIR UNA IMAGEN DE LA GALERIA
+/**
+ * METODO QUE PERMITE MOSTRAR LA IMAGEN DE PERFIL DEL USUARIO DESDE UNA CADENA
+ * DE BASE64, ADEMÁS DE PERMITIR AL USUARIO SELECCIONAR UNA NUEVA IMAGEN DE PERFIL DE SU GALERÍA.
+ *
+ * @param imageUri CADENA DE BASE64 DE LA IMAGEN QUE SE MOSTRARÁ.
+ * @param onUpload FUNCIÓN CALLBACK QUE RECIBE LA IMAGEN SELECCIONADA POR EL USUARIO.
+ * */
 
 @Composable
 fun UploadImage(imageUri: String, onUpload: (Uri) -> Unit) {

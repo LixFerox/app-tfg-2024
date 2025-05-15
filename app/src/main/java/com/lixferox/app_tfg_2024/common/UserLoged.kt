@@ -6,7 +6,13 @@ import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.lixferox.app_tfg_2024.presentation.navigation.SHome
 
-// EN CASO DE TENER COOKIE DE SESION (UID) SE INICIA SESION AUTOMATICAMENTE
+/**
+ * METODO QUE COMPRUEBA SI EXISTE UN USUARIO AUTENTICADO EN EL DISPOSITIVO, EN CASO DE HABERLO,
+ * NAVEGA AUTOMÁTICAMENTE A LA PANTALLA DE INICIO.
+ *
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+ * @param navHostController CONTROLADOR DE NAVEGACIÓN PARA PODER REALIZAR NAVEGACIÓN ENTRE VENTANAS.
+ * */
 
 @Composable
 fun IsLogged(auth: FirebaseAuth, navHostController: NavHostController) {

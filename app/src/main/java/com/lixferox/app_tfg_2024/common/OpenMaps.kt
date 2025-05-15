@@ -4,7 +4,12 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.net.toUri
 
-// METODO QUE NOS PERMITE ABRIR GOOGLE MAPS CON LA UBICACION QUE LE PASEMOS COMO PARAMETRO
+/**
+ * METODO QUE PERMITE ABRIR GOOGLE MAPS CON LA DIRECCIÓN INDICADA.
+ *
+ * @param context CONTEXTO DESDE EL CUAL SE INICIA LA ACTIVIDAD.
+ * @param ubication UBICACIÓN CON LAS COORDENADAS QUE SE QUIERE VISUALIZAR.
+ * */
 
 fun openMaps(context: Context, ubication: String) {
     val intent = Intent(Intent.ACTION_VIEW, "geo:0,0?q=$ubication".toUri())

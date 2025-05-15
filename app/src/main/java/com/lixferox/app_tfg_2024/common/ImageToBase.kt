@@ -8,7 +8,13 @@ import android.util.Base64
 import java.io.ByteArrayOutputStream
 import androidx.core.graphics.scale
 
-// FUNCION QUE CONVIERTE LA IMAGEN A BASE64 PARA PODER GUARDARLA EN LA BASE DE DATOS
+/**
+ * METODO QUE CONVIERTE UNA IMAGEN A BASE64 Y FORMATO WEBP PARA PODER ALMACENARLA EN LA BASE DE DATOS.
+ *
+ * @param context CONTEXTO DESDE EL CUAL SE INICIA LA ACTIVIDAD.
+ * @param imageUri URI DE LA IMAGEN A CONVERTIR.
+ * @return CADENA DE BASE64 CON LA IMAGEN CONVERTIDA EN WEBP O NULL EN CASO DE QUE DE ERROR.
+ * */
 
 fun parseImage(context: Context, imageUri: Uri): String {
     val inputStream = context.contentResolver.openInputStream(imageUri) ?: return ""

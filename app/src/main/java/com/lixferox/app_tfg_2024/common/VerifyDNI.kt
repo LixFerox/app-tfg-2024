@@ -1,6 +1,11 @@
 package com.lixferox.app_tfg_2024.common
 
-// FUNCION QUE COMPRUEBA SI EL DNI ES VALIDO
+/**
+ * METODO QUE COMPRUEBA SI UN DNI ES VÁLIDO.
+ *
+ * @param dni DNI INTRODUCIDO POR EL USUARIO, DEBE DE TENER 8 DÍGITOS Y UNA LETRA.
+ * @return TRUE EN CASO DE QUE EL DNI TENGA EL FORMATO CORRECTO, FALSE EN CASO CONTRARIO.
+ * */
 
 fun checkDni(dni: String): Boolean {
     val upperDNI = dni.trim().uppercase()

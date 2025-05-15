@@ -62,7 +62,14 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// VENTANA DE CREACION DE CUENTA
+/**
+ * VENTANA DEL REGISTRO DE USUARIO.
+ *
+ * @param paddingValues ESPACIANDO QUE SE APLICA EN LAS VENTANAS DE LA APLICACIÓN.
+ * @param navigateToLogin CALLBACK PARA NAVEGAR A LA VENTANA DE LOGIN.
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * */
 
 @Composable
 fun SignUpScreen(
@@ -85,7 +92,9 @@ fun SignUpScreen(
     }
 }
 
-// COMPONENTE QUE MUESTRA EL LOGO DE LA APLICACION
+/**
+ * COMPONENTE QUE MUESTRA EL LOGO DE LA APLICACIÓN.
+ * */
 
 @Composable
 private fun Logo() {
@@ -109,7 +118,13 @@ private fun Logo() {
     }
 }
 
-// COMPONENTE QUE TIENE EL FORMULARIO A RELLENAR CON LOS DATOS DEL USUARIO
+/**
+ * COMPONENTE QUE CONTIENE EL FORMULARIO DONDE ESTÁN LOS DATOS A RELLENAR DEL USUARIO.
+ *
+ * @param navigateToLogin CALLBACK PARA NAVEGAR A LA VENTANA DE LOGIN.
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * */
 
 @Composable
 private fun Form(navigateToLogin: () -> Unit, auth: FirebaseAuth, db: FirebaseFirestore) {
@@ -355,7 +370,11 @@ private fun Form(navigateToLogin: () -> Unit, auth: FirebaseAuth, db: FirebaseFi
     }
 }
 
-// COMPONENTE QUE EN CASO DE TENER CUENTA MUEVE AL USUARIO A LA PAGINA DE INICIO DE SESION
+/**
+ * COMPONENTE QUE PERMITE NAVEGAR AL USUARIO A LA VENTANA DE LOGIN EN CASO DE TENER CUENTA.
+ *
+ * @param navigateToLogin CALLBACK PARA NAVEGAR A LA VENTANA DE LOGIN.
+ * */
 
 @Composable
 private fun SignUp(navigateToLogin: () -> Unit) {
@@ -387,7 +406,12 @@ private fun SignUp(navigateToLogin: () -> Unit) {
     }
 }
 
-// COMPONENTE QUE PERMITE ELEGIR UNA FECHA
+/**
+ * COMPONENTE QUE MUESTRA UNA ALERTA PARA PODER ELEGIR LA FECHA DE NACIMIENTO.
+ *
+ * @param onDismiss CALLBACK QUE SE EJECUTA AL CANCELAR EL DIÁLOGO.
+ * @param onAccept CALLBACK QUE SE EJECUTA AL CONFIRMAR LA ACCIÓN.
+ * */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

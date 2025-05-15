@@ -59,7 +59,21 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// VENTANA DE LOS AJUSTES DEL USUARIO
+/**
+ * VENTANA DE LOS AJUSTES DEL USUARIO.
+ *
+ * @param paddingValues ESPACIANDO QUE SE APLICA EN LAS VENTANAS DE LA APLICACIÓN.
+ * @param navigateToLogin CALLBACK PARA NAVEGAR A LA VENTANA DE LOGIN.
+ * @param navigateToSettings CALLBACK PARA NAVEGAR A LA VENTANA DE AJUSTES.
+ * @param navigateToProfileInfo CALLBACK PARA NAVEGAR A LA VENTANA DE INFORMACIÓN DEL USUARIO.
+ * @param navigateToHome CALLBACK PARA NAVEGAR A LA VENTANA DE INICIO.
+ * @param navigateToSearch CALLBACK PARA NAVEGAR A LA VENTANA DE BÚSQUEDA.
+ * @param navigateToTask CALLBACK PARA NAVEGAR A LA VENTANA DE TAREAS.
+ * @param navigateToStats CALLBACK PARA NAVEGAR A LA VENTANA DE ESTADÍSTICAS.
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * @param viewModel VIEWMODEL QIUE TIENE LA LÓGICA PARA PODER ACCEDER A LOS DATOS.
+ * */
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -115,7 +129,13 @@ fun SettingsScreen(
     }
 }
 
-// COMPONENTE QUE TIENE EL FORMULARIO DONDE ESTARAN LOS DATOS DEL USUARIO
+/**
+ * COMPONENTE QUE CONTIENE EL FORMULARIO DONDE ESTÁN LOS DATOS DEL USUARIO.
+ *
+ * @param modifier MODIFICADOR QUE PERMITE PERSONALIZAR EL LAYOUT.
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * */
 
 @Composable
 private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: FirebaseFirestore) {
@@ -313,7 +333,12 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
     }
 }
 
-// COMPONENTE QUE PERMITE ELEGIR UNA FECHA
+/**
+ * COMPONENTE QUE MUESTRA UNA ALERTA DONDE PERMITE ELEGIR UNA FECHA DE NACIMIENTO NUEVA.
+ *
+ * @param onDismiss CALLBACK QUE SE EJECUTA AL CANCELAR EL DIÁLOGO.
+ * @param onAccept CALLBACK QUE SE EJECUTA AL ELEGIR UNA FECHA.
+ * */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -336,7 +361,12 @@ private fun BirthPicker(onDismiss: () -> Unit, onAccept: (String) -> Unit) {
     }
 }
 
-// COMPONENTE QUE MUESTRA UNA ALERTA DE QUE SE VAN A CAMBIAR LOS DATOS
+/**
+ * COMPONENTE QUE MUESTRA UNA ALERTA INDICANDO QUE SI SE QUIEREN GUARDAR LOS CAMBIOS.
+ *
+ * @param onDismiss CALLBACK QUE SE EJECUTA AL CANCELAR EL DIÁLOGO.
+ * @param onAccept CALLBACK QUE SE EJECUTA AL CONFIRMAR LA ACCIÓN.
+ * */
 
 @Composable
 private fun ChangeSettings(onDismiss: () -> Unit, onAccept: () -> Unit) {

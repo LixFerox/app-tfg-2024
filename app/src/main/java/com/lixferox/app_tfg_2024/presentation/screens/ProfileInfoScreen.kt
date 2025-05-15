@@ -71,7 +71,21 @@ import ir.ehsannarmani.compose_charts.models.HorizontalIndicatorProperties
 import ir.ehsannarmani.compose_charts.models.Line
 import java.util.Date
 
-// VENTANA DE LA INFORMACION DEL USUARIO
+/**
+ * VENTANA CON LA INFORMACIÓN DEL USUARIO.
+ *
+ * @param paddingValues ESPACIANDO QUE SE APLICA EN LAS VENTANAS DE LA APLICACIÓN.
+ * @param navigateToLogin CALLBACK PARA NAVEGAR A LA VENTANA DE LOGIN.
+ * @param navigateToSettings CALLBACK PARA NAVEGAR A LA VENTANA DE AJUSTES.
+ * @param navigateToProfileInfo CALLBACK PARA NAVEGAR A LA VENTANA DE INFORMACIÓN DEL USUARIO.
+ * @param navigateToHome CALLBACK PARA NAVEGAR A LA VENTANA DE INICIO.
+ * @param navigateToSearch CALLBACK PARA NAVEGAR A LA VENTANA DE BÚSQUEDA.
+ * @param navigateToTask CALLBACK PARA NAVEGAR A LA VENTANA DE TAREAS.
+ * @param navigateToStats CALLBACK PARA NAVEGAR A LA VENTANA DE ESTADÍSTICAS.
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * @param viewModel VIEWMODEL QIUE TIENE LA LÓGICA PARA PODER ACCEDER A LOS DATOS.
+ * */
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -127,7 +141,14 @@ fun ProfileInfoScreen(
     }
 }
 
-// COMPONENTE QUE IMPORTARA TODAS LAS SECCIONES A MOSTRAR
+/**
+ * COMPONENTE DEL CONTENIDO PRINCIPAL, MUESTRA LOS DATOS DEL USUARIO.
+ *
+ * @param modifier MODIFICADOR QUE PERMITE PERSONALIZAR EL LAYOUT.
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * @param navigateToLogin CALLBACK PARA NAVEGAR A LA VENTANA DE LOGIN.
+ * */
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -208,7 +229,13 @@ private fun ProfileData(
     }
 }
 
-// COMPONENTE QUE MOSTRARA EL NOMBRE DEL USUARIO Y SU ICONO
+/**
+ * COMPONENTE QUE MUESTRA EL NOMBRE DEL USUARIO Y LA IMAGEN DE PERFIL DEL USUARIO.
+ *
+ * @param image IMAGEN DE PERFIL DEL USUARIO AUTENTICADO.
+ * @param username NOMBRE DEL USUARIO AUTENTICADO.
+ * @param level NIVEL DEL USUARIO.
+ * */
 
 @Composable
 private fun UserHeader(image: String, username: String, level: Int) {
@@ -255,7 +282,12 @@ private fun UserHeader(image: String, username: String, level: Int) {
     )
 }
 
-// COMPONENTE QUE MOSTRARA LA BARRA DE NIVEL DEL USUARIO
+/**
+ * COMPONENTE QUE MUESTRA LA PUNTUACIÓN ACUMULADA DEL USUARIO.
+ *
+ * @param levelBar PUNTOS ACTUALES DEL USUARIO.
+ * @param fraction FRACCIÓN DEL ANCHO QUE OCUPA LA BARRA.
+ * */
 
 @Composable
 fun LevelBar(levelBar: Int, fraction: Float) {
@@ -271,7 +303,12 @@ fun LevelBar(levelBar: Int, fraction: Float) {
     )
 }
 
-// COMPONENTE QUE MOSTRARA LAS ESTADISTICAS DEL USUARIO
+/**
+ * COMPONENTE QUE MUESTRA LAS ESTADÍSTICAS DEL USUARIO.
+ *
+ * @param puntuation PUNTUACIÓN DEL USUARIO.
+ * @param totalRequests NÚMERO TOTAL DE SOLICITUDES COMPLETADAS.
+ * */
 
 @Composable
 private fun StatsSection(puntuation: Double, totalRequests: Int) {
@@ -346,7 +383,12 @@ private fun StatsSection(puntuation: Double, totalRequests: Int) {
     }
 }
 
-// COMPONENTE QUE MOSTRARA LA ANTIGUEDAD DEL USUARIO Y LAS TAREAS DE LA SEMANA
+/**
+ * COMPONENTE QUE MUESTRA LA ANTGUEDAD DEL USUARIO Y UN GRÁFICO CON LAS TAREAS SEMANALES.
+ *
+ * @param joinedIn FECHA DE REGISTRO DEL USUARIO.
+ * @param listTasksWeek LISTA CON EL NÚMERO TOTAL DE SOLICITUDES COMPLETADAS POR DÍA.
+ * */
 
 @Composable
 private fun InfoSection(joinedIn: Timestamp, listTasksWeek: List<Double>) {
@@ -495,7 +537,14 @@ private fun InfoSection(joinedIn: Timestamp, listTasksWeek: List<Double>) {
     }
 }
 
-// COMPONENTE QUE ELIMINARA LA CUENTA DEL USUARIO
+/**
+ * COMPONENTE QUE PERMITE ELIMINAR LA CUENTA DEL USUARIO.
+ *
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * @param onError CALLBACK QUE SE EJECUTA EN CASO DE ERROR.
+ * @param onSuccess CALLBACK QUE SE EJECUTA EN CASO DE CONFIRMAR LA ELIMINACIÓN DE CUENTA.
+ * */
 
 @Composable
 private fun DeleteAccount(

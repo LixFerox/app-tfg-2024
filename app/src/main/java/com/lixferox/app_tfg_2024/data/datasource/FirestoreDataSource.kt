@@ -21,9 +21,19 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.util.Locale
 
+/**
+ * VIEWMODEL QUE CONTIENE LOS MÉTODOS PARA PODER INTERACTUAR CON FIRESTORE, GESTIONANDO LAS SOLICITUDES
+ * */
+
 class FirestoreDataSource : ViewModel() {
 
-    // FUNCION QUE OBTIENE TODAS LAS PETICIONES
+    /**
+     * METODO QUE SE ENCARGA DE OBTENER TODAS LAS SOLICITUDES.
+     *
+     * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO..
+     * @param isHelper INDICA SI EL USUARIO ES UN AYUDANTE O UN ANCIANO.
+     * @param onResult CALLBACK CON LA LISTA DE SOLICITUDES.
+     * */
 
     fun obtainAllRequest(
         db: FirebaseFirestore,
@@ -63,7 +73,13 @@ class FirestoreDataSource : ViewModel() {
         }
     }
 
-    // FUNCION QUE PERMITE ACEPTAR PETICIONES
+    /**
+     * METODO QUE PERMITE ASIGNAR SOLICITUDES A LOS USUARIOS.
+     *
+     * @param index ID DE LA SOLICITUD.
+     * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO..
+     * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+     * */
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun acceptRequest(index: String, db: FirebaseFirestore, auth: FirebaseAuth) {
@@ -118,7 +134,13 @@ class FirestoreDataSource : ViewModel() {
             }
     }
 
-    // FUNCION QUE OBTIENE TODAS LAS PETICIONES ACPETADAS
+    /**
+     * METODO QUE OBTIENE TODAS LAS SOLICITUDES ACEPTADAS.
+     *
+     * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+     * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+     * @param onResult CALLBACK CON LA LISTA DE SOLICITUDES ACEPTADAS.
+     * */
 
     fun getAcceptedRequest(
         db: FirebaseFirestore,
@@ -154,7 +176,15 @@ class FirestoreDataSource : ViewModel() {
             }
     }
 
-    // FUNCION QUE CMABIA LOS VALORES DE LA PETICION AL COMPLETARLA O CANCELARLA
+    /**
+     * METODO QUE CAMBIA LOS VALORES DE LA SOLICITUD AL COMPLETARLA O CANCELARLA.
+     *
+     * @param index ID DE LA SOLICITUD.
+     * @param action ACCIÓN A REALIZAR.
+     * @param isHelper INDICA SI EL USUARIO ES UN AYUDANTE O UN ANCIANO.
+     * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+     * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+     * */
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun actionAcceptedRequest(
@@ -220,7 +250,13 @@ class FirestoreDataSource : ViewModel() {
             }
     }
 
-    // FUNCION QUE OBTIENE LA ACTIVIDAD DEL USUARIO
+    /**
+     * METODO QUE OBTIENE LA ACTIVIDAD RECIENTE DEL USUARIO.
+     *
+     * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+     * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+     * @param onResult CALLBACK CON LA LISTA DE LA ACTIVIDAD RECIENTE DEL USUARIO.
+     * */
 
     fun obtainActivity(
         auth: FirebaseAuth,
@@ -245,7 +281,13 @@ class FirestoreDataSource : ViewModel() {
             }
     }
 
-    // FUNCION QUE OBTIENE LAS PETICIONES DEL USUARIO
+    /**
+     * METODO QUE OBTIENE LAS SOLICITUDES DEL USUARIO.
+     *
+     * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+     * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+     * @param onResult CALLBACK CON LA LISTA DE SOLICITUDES DEL USUARIO.
+     * */
 
     fun obtainRequests(
         auth: FirebaseAuth,
@@ -281,7 +323,13 @@ class FirestoreDataSource : ViewModel() {
             }
     }
 
-    // FUNCION QUE LIMITA LAS PETICIONES DEL USUARIO
+    /**
+     * METODO QUE LIMITA LAS SOLICITUDES ACEPTADAS DEL USUARIO.
+     *
+     * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+     * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+     * @param onResult CALLBACK CON EL NÚMERO DE SOLICITUDES ACEPTADAS.
+     * */
 
     fun limitRequest(auth: FirebaseAuth, db: FirebaseFirestore, onResult: (Int) -> Unit) {
         val uid = auth.currentUser?.uid
@@ -291,7 +339,13 @@ class FirestoreDataSource : ViewModel() {
             }
     }
 
-    // FUNCION QUE LIMITA LAS PETICIONES CREADAS
+    /**
+     * METODO QUE LIMITA LAS SOLICITUDES CREADAS DEL USUARIO.
+     *
+     * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+     * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+     * @param onResult CALLBACK CON EL NÚMERO DE SOLICITUDES CREADAS.
+     * */
 
     fun limitCreated(auth: FirebaseAuth, db: FirebaseFirestore, onResult: (Int) -> Unit) {
         val uid = auth.currentUser?.uid
@@ -301,7 +355,14 @@ class FirestoreDataSource : ViewModel() {
             }
     }
 
-    // FUNCION QUE RECUPERA LA PETICION ACTUAL
+    /**
+     * METODO QUE OBTIENE LA SOLICITUD ACTUAL.
+     *
+     * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+     * @param id ID DE LA SOLICITUD.
+     * @param onResult CALLBACK CON EL NÚMERO DE SOLICITUDES ACEPTADAS.
+     * */
+
     fun getCurrentRequest(
         db: FirebaseFirestore,
         id: String,
@@ -343,7 +404,13 @@ class FirestoreDataSource : ViewModel() {
     }
 }
 
-// FUNCION QUE OBTIENE LAS ESTADISTICAS DEL USUARIO
+/**
+ * METODO QUE OBTIENE LAS ESTADÍSTICAS DEL USUARIO.
+ *
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL..
+ * @param onResult CALLBACK CON LAS ESTADÍSTICAS DEL USUARIO.
+ * */
 
 @RequiresApi(Build.VERSION_CODES.O)
 fun obtainUserStats(
@@ -377,7 +444,13 @@ fun obtainUserStats(
     }
 }
 
-// FUNCION QUE OBTIENE LA INFORMACION DEL USUARIO
+/**
+ * METODO QUE OBTIENE LA INFORMACIÓN DEL USUARIO.
+ *
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL..
+ * @param onResult CALLBACK CON LOS DATOS DEL USUARIO.
+ * */
 
 fun obtainUserInfo(auth: FirebaseAuth, db: FirebaseFirestore, onResult: (User) -> Unit) {
     val uid = auth.currentUser?.uid
@@ -402,7 +475,18 @@ fun obtainUserInfo(auth: FirebaseAuth, db: FirebaseFirestore, onResult: (User) -
     }
 }
 
-// FUNCION QUE PERMITE CREAR UNA PETICION
+/**
+ * METODO QUE PERMITE CREAR UNA SOLICITUD.
+ *
+ * @param title TITULO DE LA SOLICITUD.
+ * @param description DESCRIPCIÓN DE LA SOLICITUD.
+ * @param urgency URGENCIA DE LA SOLICITUD.
+ * @param isHelper INDICA SI EL USUARIO ES AYUDANTE O ANCIANO.
+ * @param uid UID DEL USUARIO ACTUAL.
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+ * @param onSuccess CALLBACK QUE SE EJECUTA AL CREAR LA SOLICITUD.
+ * */
 
 @RequiresApi(Build.VERSION_CODES.O)
 fun createRequest(
@@ -457,7 +541,19 @@ fun createRequest(
     }
 }
 
-// FUNCION QUE ACTUALIZA LOS DATOS DEL USUARIO
+/**
+ * METODO QUE ACTUALIZA LOS DATOS DEL USUARIO.
+ *
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL..
+ * @param email CORREO ELECTRÓNICO DEL USUARIO.
+ * @param username NOMBRE DEL USUARIO.
+ * @param phone TELÉFONO DEL USUARIO.
+ * @param birth FECHA DE NACIMIENTO DEL USUARIO.
+ * @param address DIRECCIÓN DEL USUARIO.
+ * @param dni DNI DEL USUARIO.
+ * @param image FOTO DE PERFIL DEL USUARIO.
+ * */
 
 fun updateInfo(
     auth: FirebaseAuth,
@@ -498,7 +594,14 @@ fun updateInfo(
     }
 }
 
-// FUNCION QUE PERMITE BORRAR UNA CUENTA
+/**
+ * METODO QUE PERMITE ELIMINAR LA CUENTA.
+ *
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+ * @param onSuccess CALLBACK QUE SE EJECUTA AL ELIMINAR LA CUENTA.
+ * @param onError CALLBACK QUE SE EJECUTA AL OCURRIR UN ERROR.
+ * */
 
 fun deleteAccount(
     auth: FirebaseAuth,
@@ -550,7 +653,12 @@ fun deleteAccount(
     }
 }
 
-// FUNCION QUE CREA LOS REGISTROS DEL USUARIO
+/**
+ * METODO QUE CREA LA ACTIVIDAD RECIENTE DEL USUARIO.
+ *
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * @param currentActivity ACTIVIDAD RECIENTE QUE SE HA REGISTRADO.
+ * */
 
 private fun createActivity(db: FirebaseFirestore, currentActivity: Activity) {
     db.collection(Tables.activity).add(currentActivity).addOnCompleteListener { activity ->
@@ -560,7 +668,13 @@ private fun createActivity(db: FirebaseFirestore, currentActivity: Activity) {
     }
 }
 
-// FUNCION QUE ACTUALIZA LAS ESTADISTICAS DEL USUARIO
+/**
+ * METODO QUE ACTUALIZA LAS ESTADÍSTICAS DEL USUARIO.
+ *
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
+ * @param action ACCIÓN QUE SE REALIZA.
+ * */
 
 @RequiresApi(Build.VERSION_CODES.O)
 private fun updateStats(db: FirebaseFirestore, auth: FirebaseAuth, action: String) {
@@ -668,7 +782,13 @@ private fun updateStats(db: FirebaseFirestore, auth: FirebaseAuth, action: Strin
     }
 }
 
-// FUNCION QUE ELIMINA UN PETICION
+/**
+ * METODO QUE ELIMINA UNA PETICIÓN.
+ *
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * @param description DESCRIPCIÓN DE LA ACTIVIDAD.
+ * @param id ID DE LA PETICIÓN.
+ * */
 
 fun deleteRequest(db: FirebaseFirestore, uid: String, description: String, id: String) {
     db.collection(Tables.requests).whereEqualTo("id", id).get().addOnCompleteListener { task ->
@@ -688,7 +808,13 @@ fun deleteRequest(db: FirebaseFirestore, uid: String, description: String, id: S
     }
 }
 
-// FUNCION QUE ACTUALIZA LA PUNTUACION DEL USUARIO
+/**
+ * METODO QUE ACTUALIZA LA PUNTUACIÓN DEL USUARIO.
+ *
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * @param uid UID DEL USUARIO.
+ * @param points PUNTUACIÓN A ASIGNAR AL USUARIO.
+ * */
 
 fun updatePuntuationStars(db: FirebaseFirestore, uid: String, points: Int) {
     db.collection(Tables.stats).whereEqualTo("uid", uid).get().addOnCompleteListener { task ->
@@ -717,7 +843,11 @@ fun updatePuntuationStars(db: FirebaseFirestore, uid: String, points: Int) {
     }
 }
 
-// FUNCION QUE CAMBIA LOS VALORES DE LA SEMANA DEL USUARIO A 0
+/**
+ * METODO QUE REINICIA LOS VALORES SEMANALES DEL USUARIO.
+ *
+ * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
+ * */
 
 @RequiresApi(Build.VERSION_CODES.O)
 private fun setGraphicValues(db: FirebaseFirestore) {

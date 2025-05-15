@@ -4,7 +4,12 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.net.toUri
 
-// METODO QUE NOS PERMITE LLAMAR AL TENEFONO QUE LE PASEMOS POR PARAMETRO
+/**
+ * METODO QUE PERMITE LLAMAR AL NÚMERO DE TELÉFONO INDICADO.
+ *
+ * @param context CONTEXTO DESDE EL CUAL SE INICIA LA ACTIVIDAD.
+ * @param phone NÚMERO DE TELÉFONO AL QUE SE QUIERE LLAMAR.
+ * */
 
 fun callPhone(context: Context, phone: String) {
     val intent = Intent(Intent.ACTION_DIAL, "tel:$phone".toUri())
