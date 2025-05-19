@@ -55,7 +55,8 @@ fun NavigationWrapper(
                         popUpTo(SLogin) { inclusive = true }
                         launchSingleTop = true
                     }
-                }
+                },
+                db
             )
         }
 

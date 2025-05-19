@@ -1,5 +1,10 @@
 package com.lixferox.app_tfg_2024.presentation.screens
 
+import android.content.Context
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +34,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -36,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -45,8 +52,12 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.lixferox.app_tfg_2024.R
+import com.lixferox.app_tfg_2024.common.parseImage
 import com.lixferox.app_tfg_2024.data.datasource.loginFirebase
+import com.lixferox.app_tfg_2024.data.datasource.uploadDniVerify
+import java.lang.Error
 
 /**
  * VENTANA DE LOGIN DE LA APLICACIÓN.
@@ -62,7 +73,8 @@ fun LoginScreen(
     paddingValues: PaddingValues,
     auth: FirebaseAuth,
     navigateToSignUp: () -> Unit,
-    navigateToHome: () -> Unit
+    navigateToHome: () -> Unit,
+    db: FirebaseFirestore
 ) {
     Box(
         modifier = Modifier
@@ -74,7 +86,8 @@ fun LoginScreen(
         Form(
             modifier = Modifier.align(Alignment.Center),
             navigateToHome = navigateToHome,
-            auth = auth
+            auth = auth,
+            db = db
         )
         SignIn(
             modifier = Modifier.align(Alignment.BottomCenter),
@@ -123,13 +136,17 @@ private fun Logo(modifier: Modifier = Modifier) {
 private fun Form(
     modifier: Modifier = Modifier,
     navigateToHome: () -> Unit,
-    auth: FirebaseAuth
+    auth: FirebaseAuth,
+    db: FirebaseFirestore
 ) {
+    var context = LocalContext.current
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
     var resetPassword by remember { mutableStateOf(false) }
+    var showNotValidated by remember { mutableStateOf(false) }
+    var currentUid by remember { mutableStateOf("") }
 
     Card(
         modifier = modifier
@@ -209,9 +226,13 @@ private fun Form(
                     loginFirebase(
                         onSuccess = { navigateToHome() },
                         onError = { message -> errorMessage = message },
+                        onNotValidated = { uid->
+                            currentUid= uid
+                            showNotValidated = true },
                         auth = auth,
                         email = email,
-                        password = password
+                        password = password,
+                        db = db
                     )
                 },
                 modifier = Modifier
@@ -250,6 +271,14 @@ private fun Form(
             auth,
             onDismiss = { resetPassword = false },
             onAccept = { resetPassword = false })
+    }
+    if (showNotValidated && currentUid.isNotEmpty()) {
+        AlertUploadImage(onSend = { base64->
+            uploadDniVerify(base64, currentUid, db)
+            showNotValidated = false
+        }, onDismiss = {
+            showNotValidated = false
+        }, context = context)
     }
 }
 
@@ -336,6 +365,66 @@ private fun ResetPassword(auth: FirebaseAuth, onDismiss: () -> Unit, onAccept: (
                     ),
                     singleLine = true
                 )
+            }
+        })
+}
+
+@Composable
+fun AlertUploadImage(onSend: (String) -> Unit, onDismiss: () -> Unit, context: Context) {
+
+
+    var selectedUri by remember { mutableStateOf<Uri?>(null) }
+    var base64image by remember { mutableStateOf("") }
+
+    val pickDNI = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
+        if (uri != null) {
+            selectedUri = uri
+            base64image = parseImage(context, uri)
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        dismissButton = { TextButton(onClick = { onDismiss() }) { Text(text = "Cancelar") } },
+        confirmButton = {
+            TextButton(onClick = {
+                base64image.let {
+                    onSend(it)
+                }
+
+            }) { Text(text = "Enviar") }
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Enviar DNI",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Tu cuenta aún no ha sido validada.\nSube una imagen de tu DNI y espera a que un administrador te valide la cuenta.",
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Justify,
+                    fontWeight = FontWeight.Normal
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Button(
+                    onClick = {
+                        pickDNI.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
+                    },
+                    modifier = Modifier,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(color = 0xFF2196F3))
+                ) {
+                    Text(
+                        text = "Subir imagen",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         })
 }

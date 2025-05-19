@@ -467,7 +467,10 @@ fun obtainUserInfo(auth: FirebaseAuth, db: FirebaseFirestore, onResult: (User) -
                     phone = document.getString("phone") ?: "",
                     address = document.getString("address") ?: "",
                     dni = document.getString("dni") ?: "",
-                    image = document.getString("image") ?: ""
+                    image = document.getString("image") ?: "",
+                    dniImage = document.getString("dniImage") ?: "",
+                    isValid = document.getBoolean("valid") ?: false,
+                    type = document.getString("type") ?: "",
                 )
                 onResult(user)
             }
@@ -545,7 +548,7 @@ fun createRequest(
  * METODO QUE ACTUALIZA LOS DATOS DEL USUARIO.
  *
  * @param db INSTANCIA DE FIREBASEFIRESTORE QUE PERMITE LEER LA INFORMACIÓN DEL USUARIO.
- * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL..
+ * @param auth INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
  * @param email CORREO ELECTRÓNICO DEL USUARIO.
  * @param username NOMBRE DEL USUARIO.
  * @param phone TELÉFONO DEL USUARIO.

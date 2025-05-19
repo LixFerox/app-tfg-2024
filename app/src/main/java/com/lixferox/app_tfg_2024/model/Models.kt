@@ -16,6 +16,9 @@ import com.google.firebase.Timestamp
  * @property isHelper INDENTIFICA SI UN USUARIO ES AYUDANTE O ANCIANO.
  * @property dni DNI DEL USUARIO.
  * @property image IMAGEN DE PERFIL DEL USUARIO.
+ * @property dniImage IMAGEN DEL DNI PARA VALIDARLA.
+ * @property isValid COMPRUEBA SI SE HA VALIDADO LA CUENTA DE USUARIO.
+ * @property type COMPRUEBA SI ES ADMINISTRADOR O UN USUARIO.
  * */
 
 data class User(
@@ -27,7 +30,10 @@ data class User(
     val address: String,
     val isHelper: Boolean,
     val dni: String,
-    val image: String
+    val image: String,
+    val dniImage: String,
+    val isValid: Boolean,
+    var type: String
 )
 
 /**

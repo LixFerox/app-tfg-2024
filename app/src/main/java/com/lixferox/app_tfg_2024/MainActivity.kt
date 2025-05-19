@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
             // CREACIÓN DEL NAVHOSTCONTROLLER.
             navHostController = rememberNavController()
             // LLAMADA AL METODO QUE COMPRUEBA SI EL USUARIO ESTÁ LOGEADO.
-            IsLogged(auth = auth, navHostController = navHostController)
+            IsLogged(auth = auth, db = db, navHostController = navHostController)
             // CREACIÓN DE LA INTERFÁZ PRINCIPAL.
             Apptfg2024Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->

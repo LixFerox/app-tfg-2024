@@ -137,6 +137,7 @@ private fun FormRequest(
     viewModel: FirestoreDataSource,
 ) {
     var showLimit by remember { mutableStateOf(false) }
+    var emptyData by remember { mutableStateOf(false) }
 
     val user = auth.currentUser
         ?: run {
@@ -183,6 +184,8 @@ private fun FormRequest(
                 viewModel.limitCreated(auth = auth, db = db) { limit ->
                     if (limit == 3) {
                         showLimit = true
+                    } else if (title.isEmpty() || description.isEmpty()) {
+                        emptyData = true
                     } else {
                         createRequest(
                             title = title,
@@ -285,6 +288,12 @@ private fun FormRequest(
             showLimit = false
         })
     }
+    if (emptyData) {
+        EmptyData(onDismiss = {
+            onDismiss()
+            emptyData = false
+        })
+    }
 }
 
 /**
@@ -309,6 +318,32 @@ private fun LimitRequest(onDismiss: () -> Unit) {
                     fontWeight = FontWeight.Bold
                 )
                 Text(text = "No puedes crear más solicitudes, espera a que se completen las creadas o elimina alguna.")
+            }
+        })
+}
+
+/**
+ * COMPONENTE QUE MUESTRA UNA ALERTA SI NO SE RELLENAN TODOS LOS DATOS.
+ *
+ * @param onDismiss CALLBACK QUE SE EJECUTA AL CERRAR EL DIÁLOGO.
+ * */
+
+@Composable
+private fun EmptyData(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        confirmButton = { TextButton(onClick = { onDismiss() }) { Text(text = "Aceptar") } },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Datos vacíos",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(text = "Debes de rellenar todos los campos")
             }
         })
 }

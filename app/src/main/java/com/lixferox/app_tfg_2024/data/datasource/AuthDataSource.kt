@@ -1,6 +1,7 @@
 package com.lixferox.app_tfg_2024.data.datasource
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
@@ -17,6 +18,7 @@ import java.util.Locale
  *
  * @param onSuccess CALLBACK QUE SE EJECUTA AL HABERSE AUTENTICADO CORRECTAMENTE.
  * @param onError CALLBACK QUE SE EJECUTA EN CASO DE ERROR.
+ * @param onNotValidated CALLBACK QUE SE EJECUTA CUANDO EL USUARIO NO SE HA VALIDADO
  * @param auth  INSTANCIA DE FIREBASE PARA OBTENER EL USUARIO ACTUAL.
  * @param email CORREO ELECTRÓNICO DEL USUARIO.
  * @param password CONTRASEÑA DEL USUARIO.
@@ -25,9 +27,11 @@ import java.util.Locale
 fun loginFirebase(
     onSuccess: () -> Unit,
     onError: (String) -> Unit,
+    onNotValidated: (String) -> Unit,
     auth: FirebaseAuth,
     email: String,
-    password: String
+    password: String,
+    db: FirebaseFirestore,
 ) {
     if (email.isEmpty() || password.isEmpty()) {
         onError("El email o contraseña están vacías")
@@ -38,11 +42,27 @@ fun loginFirebase(
             auth.currentUser?.reload()?.addOnCompleteListener { reload ->
                 if (reload.isSuccessful) {
                     val user = auth.currentUser
-                    if (user != null && user.isEmailVerified) {
-                        onSuccess()
-                    } else {
-                        onError("Tu correo no está verificado.\nRevisa tu bandeja y pulsa el enlace que te hemos enviado.")
+                    if (user == null) {
+                        return@addOnCompleteListener
                     }
+                    if (!user.isEmailVerified) {
+                        onError("Tu correo no está verificado.\nRevisa tu bandeja y pulsa el enlace que te hemos enviado.")
+                        return@addOnCompleteListener
+                    }
+                    db.collection(Tables.users).whereEqualTo("uid", user.uid).get()
+                        .addOnCompleteListener { valid ->
+                            if (valid.isSuccessful) {
+                                val document = valid.result.documents.firstOrNull()
+                                if (document != null) {
+                                    val isValid = document.getBoolean("valid") ?: false
+                                    if (!isValid) {
+                                        onNotValidated(user.uid)
+                                        return@addOnCompleteListener
+                                    }
+                                    onSuccess()
+                                }
+                            }
+                        }
                 }
             }
         } else {
@@ -118,7 +138,10 @@ fun createAccountFirebase(
                 address = address,
                 phone = phone,
                 dni = dni,
-                image = "TODO"
+                image = "TODO",
+                dniImage = "",
+                isValid = false,
+                type = "CURRENT"
             )
             db.collection(Tables.users).add(currentUser).addOnCompleteListener { added ->
                 if (added.isSuccessful) {
@@ -148,6 +171,26 @@ fun createAccountFirebase(
         } else {
             onError(task.exception?.message ?: "Error desconocido al crear la cuenta")
             return@addOnCompleteListener
+        }
+    }
+}
+
+fun uploadDniVerify(dni: String, uid: String, db: FirebaseFirestore) {
+    db.collection(Tables.users).whereEqualTo("uid", uid).get().addOnCompleteListener { task ->
+        if (task.isSuccessful) {
+            val document = task.result.documents.firstOrNull()
+            if (document != null) {
+                document.reference.update(
+                    "dniImage", dni,
+                ).addOnCompleteListener { update ->
+                    if (update.isSuccessful) {
+                        Log.i(
+                            "UpdateInfo",
+                            "Se ha enviado el DNI"
+                        )
+                    }
+                }
+            }
         }
     }
 }

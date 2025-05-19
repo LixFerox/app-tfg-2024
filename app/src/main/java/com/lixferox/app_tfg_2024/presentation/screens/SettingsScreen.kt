@@ -211,6 +211,8 @@ private fun FormOptions(modifier: Modifier = Modifier, auth: FirebaseAuth, db: F
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next
             ),
+            enabled = false,
+            readOnly = true,
             singleLine = true
         )
         Spacer(Modifier.height(8.dp))
